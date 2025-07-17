@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RecallTools",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "prompt": { "type": "string" },
+    "details": {
+      "type": "object",
+      "description": "A dictionary for additional details about the tool.",
+      "default": {}
+    },
+    "action": {
+      "type": "string",
+      "enum": ["rephrase", "recall", "filter", "direct"],
+      "default": "rephrase"
+    },
+    "toolcall": {
+      "type": ["string", "null"],
+      "description": "Tool name to be called, if applicable. when the action is recall, this field is required.",
+      "default": null
+    }
+  },
+  "required": ["name", "prompt", "action"]
+}

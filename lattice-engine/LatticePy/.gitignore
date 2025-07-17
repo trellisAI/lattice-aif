@@ -1,0 +1,28 @@
+# Python-specific ignores
+## Byte-code files ##
+*.pyc
+__pycache__/
+*.pyd
+*.pyo
+*.egg-info/
+
+## Virtual Environment ##
+.venv/
+env/
+venv/
+.env/
+
+## Testing and coverage ##
+.pytest_cache/
+.coverage
+htmlcov/
+.nox/
+
+## Distribution and packaging ##
+dist/
+build/
+*.egg
+*.whl
+
+## Jupyter Notebooks ##
+.ipynb_checkpoints

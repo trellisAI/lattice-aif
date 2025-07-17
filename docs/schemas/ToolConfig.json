@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ToolConfig",
+  "type": "object",
+  "properties": {
+    "functions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["all"]
+    },
+    "details": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/RecallTools" },
+      "default": []
+    }
+  },
+  "required": ["functions", "details"],
+  "definitions": {
+    "RecallTools": { "$ref": "./RecallTools.json" }
+  }
+}
