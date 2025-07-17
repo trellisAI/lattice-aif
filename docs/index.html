@@ -1,144 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>trellisAI - The Universal Engine for Intelligent Automation</title>
-    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 900px;
-            background-color: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            text-align: center;
-            animation: fadeIn 1s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .logo-svg {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 30px;
-            display: block;
-        }
-        .gradient-text {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-        }
-        .btn {
-            display: inline-block;
-            padding: 12px 28px;
-            border-radius: 10px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-        }
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            background: linear-gradient(45deg, #5a67d8, #6a3ea0);
-        }
-        .btn-secondary {
-            background-color: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-            margin-left: 20px;
-        }
-        .btn-secondary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            background-color: #f0f2f5;
-        }
-        /* Responsive adjustments */
-        @media (max-width: 640px) {
-            .container {
-                padding: 30px 20px;
-            }
-            .text-5xl {
-                font-size: 2.5rem;
-            }
-            .text-xl {
-                font-size: 1.125rem;
-            }
-            .btn {
-                padding: 10px 20px;
-                font-size: 0.9rem;
-            }
-            .btn-secondary {
-                margin-left: 0;
-                margin-top: 15px;
-            }
-            .btn-group {
-                flex-direction: column;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Lattice AIF Documentation</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css"/>
+  <style>
+    body { max-width: 900px; margin: 2em auto; font-family: Arial, sans-serif; }
+    .markdown-body { padding: 2em; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);}
+    nav { margin-bottom: 2em; }
+    nav a { margin-right: 1em; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- LatticeAI Logo (using the SVG provided previously) -->
-        <svg class="logo-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <title>LatticeAI Logo</title>
-            <desc>A logo for LatticeAI, representing interconnected nodes and intelligence.</desc>
-            <defs>
-                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M 20 0 L 0 0 L 0 20" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
-                </pattern>
-            </defs>
-            <rect width="200" height="200" fill="url(#grid)"/>
-            <path d="M 50 70 L 100 20 L 150 70 L 100 120 Z" fill="#667eea" stroke="#4c5efc" stroke-width="2"/>
-            <path d="M 50 130 L 100 80 L 150 130 L 100 180 Z" fill="#764ba2" stroke="#603ea8" stroke-width="2" opacity="0.9"/>
-            <circle cx="100" cy="100" r="35" fill="white" stroke="#3182ce" stroke-width="3"/>
-            <circle cx="90" cy="90" r="5" fill="#3182ce"/>
-            <circle cx="110" cy="90" r="5" fill="#3182ce"/>
-            <circle cx="100" cy="110" r="5" fill="#3182ce"/>
-            <text x="100" y="105" font-family="Inter, sans-serif" font-size="24" font-weight="bold" fill="#1a202c" text-anchor="middle" dominant-baseline="middle">AI</text>
-        </svg>
-
-        <h1 class="text-5xl font-extrabold leading-tight mb-4 gradient-text">
-            LatticeAI
-        </h1>
-        <p class="text-xl text-gray-700 mb-8">
-            The Universal Engine for Intelligent Automation.
-        </p>
-        <p class="text-lg text-gray-600 mb-10">
-            LatticeAI is an innovative agentic framework and platform that provides a unified abstraction layer over diverse Large Language Models (LLMs) and external tools, empowering you to create robust, actionable AI solutions with unprecedented flexibility.
-        </p>
-
-        <div class="flex justify-center flex-wrap btn-group">
-            <a href="https://your-github-username.github.io/lattice-ai/" class="btn btn-primary">
-                Explore Documentation
-            </a>
-            <a href="https://github.com/your-github-username/lattice-ai/" class="btn btn-secondary mt-4 sm:mt-0">
-                View on GitHub
-            </a>
-        </div>
-
-        <p class="text-sm text-gray-500 mt-12">
-            Built with ❤️ by [Your Company Name/Your Name]
-        </p>
-    </div>
+  <div class="markdown-body">
+    <h1>Lattice AIF Documentation</h1>
+    <nav>
+      <a href="get-started.md">Get Started</a>
+      <a href="quick-start.md">Quick Start</a>
+      <a href="installation.md">Installation</a>
+      <a href="client.md">Client Packages Installation</a>
+      <a href="server-api.md">Server API Endpoints</a>
+      <a href="faq.md">FAQ</a>
+    </nav>
+    <p>Welcome to the documentation for Lattice AIF. Use the links above to get started, install the software, and explore the API endpoints.</p>
+  </div>
 </body>
 </html>
