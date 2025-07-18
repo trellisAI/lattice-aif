@@ -1,5 +1,5 @@
 
-# Get Started with Lattice AIF
+## 🚀 Getting Started
 
 Welcome to the Lattice AIF documentation! This guide will help you get started with the project, including an introduction and installation instructions.
 
@@ -57,4 +57,26 @@ Refer to the configuration documentation in the `docs/installation.md` file for 
 
 ---
 
-You’re now ready to explore how to use Lattice AIF! Continue with the [Quick Start](quick-start.md) guide for your first project.
+For detailed instructions and more examples, please refer to our [Official Documentation]([(https://trellisai.github.io/lattice-aif/details.md)]).
+
+## 📖 Documentation
+
+Our comprehensive documentation covers everything from installation and configuration to advanced agent development and deployment strategies.
+
+**[Explore the Docs ↗](https://trellisai.github.io/lattice-aif/details.md)**
+
+## 🌐 Community & Support
+
+Join our community to connect with other developers, get support, and contribute to LatticeAI's growth:
+
+* **GitHub Issues:** Report bugs or suggest features.
+* **Discussions (Coming Soon):** Ask questions and engage with the community.
+* **Discord/Slack (Future):** Real-time chat.
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Whether it's code, documentation, or ideas, your input is valuable. Please see our `CONTRIBUTING.md` (coming soon) for guidelines.
+
+## 📄 License
+
+lattice-aif is released under the [MIT License](LICENSE).
