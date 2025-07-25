@@ -5,23 +5,203 @@
   <title>Lattice AIF Documentation</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css"/>
   <style>
-    body { max-width: 900px; margin: 2em auto; font-family: Arial, sans-serif; }
-    .markdown-body { padding: 2em; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);}
-    nav { margin-bottom: 2em; }
-    nav a { margin-right: 1em; }
+    body {
+      max-width: 1200px;
+      margin: 2em auto;
+      font-family: Arial, sans-serif;
+      background: #f6f8fa;
+      color: #222;
+    }
+    .container {
+      display: flex;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border-radius: 6px;
+      background: #fff;
+      min-height: 700px;
+    }
+    .sidebar {
+      width: 260px;
+      background: #f3f4f6;
+      padding: 1.5em 0.5em 1.5em 1.5em;
+      border-right: 1px solid #e1e4e8;
+      min-height: 700px;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar li {
+      margin-bottom: 0.6em;
+      cursor: pointer;
+      position: relative;
+    }
+    .sidebar a, .sidebar span {
+      text-decoration: none;
+      color: #222;
+      font-weight: 500;
+      font-size: 1.05em;
+      display: block;
+      padding: 0.2em 0.5em;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .sidebar a.active, .sidebar span.active {
+      background: #e1e4e8;
+      color: #1a1a1a;
+    }
+    .sidebar .toggle {
+      font-size: 0.95em;
+      cursor: pointer;
+      margin-right: 0.35em;
+      color: #888;
+      user-select: none;
+      transition: color 0.15s;
+    }
+    .sidebar .toggle.open {
+      color: #0366d6;
+    }
+    .sidebar ul ul {
+      margin-left: 1.1em;
+      border-left: 1.5px solid #eee;
+      padding-left: 0.7em;
+      margin-top: 0.2em;
+      margin-bottom: 0.2em;
+    }
+    .markdown-body {
+      flex: 1;
+      padding: 2em 2.5em 2em 2.5em;
+    }
+    @media (max-width: 900px) {
+      .container { flex-direction: column; }
+      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e1e4e8; }
+      .markdown-body { padding: 1.2em; }
+    }
   </style>
 </head>
 <body>
-  <div class="markdown-body">
-    <h1>Lattice AIF Documentation</h1>
-    <nav>
-      <a href="get-started.md">Get Started</a>
-      <a href="client.md">Client Configuration</a>
-      <a href="server-api.md">Server API Endpoints</a>
-      <a href="details.md">Detail Documentation</a>
-      <a href="contribute.md">Contribute</a>
+  <div class="container">
+    <nav class="sidebar" aria-label="Documentation navigation">
+      <ul>
+        <li>
+          <a href="get-started.md" data-page="get-started.md" class="active">Get Started</a>
+        </li>
+        <li>
+          <span class="toggle" data-toggle="client">&#9654;</span>
+          <span data-toggle="client">Client</span>
+          <ul style="display: none;" data-tree="client">
+            <li><a href="client.md" data-page="client.md">Configuration</a></li>
+            <!-- Add more subpages here if needed -->
+          </ul>
+        </li>
+        <li>
+          <span class="toggle" data-toggle="server">&#9654;</span>
+          <span data-toggle="server">Server</span>
+          <ul style="display: none;" data-tree="server">
+            <li><a href="server-api.md" data-page="server-api.md">API Endpoints</a></li>
+            <!-- Add more subpages here if needed -->
+          </ul>
+        </li>
+        <li>
+          <span class="toggle" data-toggle="details">&#9654;</span>
+          <span data-toggle="details">Details</span>
+          <ul style="display: none;" data-tree="details">
+            <li><a href="details.md" data-page="details.md">Detail Documentation</a></li>
+            <!-- Add more subpages here if needed -->
+          </ul>
+        </li>
+        <li>
+          <a href="contribute.md" data-page="contribute.md">Contribute</a>
+        </li>
+      </ul>
     </nav>
-    <p>Welcome to the documentation for Lattice AIF. Use the links above to get started, install the software, and explore the API endpoints.</p>
+    <div class="markdown-body" id="doc-content">
+      <h1>Lattice AIF Documentation</h1>
+      <p>Welcome to the documentation for Lattice AIF. Use the navigation sidebar to get started, install the software, and explore the API endpoints.</p>
+    </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    // Sidebar tree logic
+    document.querySelectorAll('.sidebar .toggle').forEach(function(toggleBtn) {
+      toggleBtn.addEventListener('click', function(e) {
+        const treeKey = this.getAttribute('data-toggle');
+        const ul = document.querySelector(`ul[data-tree="${treeKey}"]`);
+        if (ul.style.display === 'block') {
+          ul.style.display = 'none';
+          this.innerHTML = '&#9654;';
+          this.classList.remove('open');
+        } else {
+          ul.style.display = 'block';
+          this.innerHTML = '&#9660;';
+          this.classList.add('open');
+        }
+      });
+    });
+
+    // Expand/collapse section on heading click
+    document.querySelectorAll('.sidebar span[data-toggle]').forEach(function(span) {
+      span.addEventListener('click', function(e) {
+        const treeKey = this.getAttribute('data-toggle');
+        const toggleBtn = document.querySelector(`.toggle[data-toggle="${treeKey}"]`);
+        toggleBtn.click();
+      });
+    });
+
+    // Sidebar link click: load markdown and highlight
+    function setActiveLink(page) {
+      document.querySelectorAll('.sidebar a, .sidebar span').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      const link = document.querySelector(`.sidebar a[data-page="${page}"]`);
+      if (link) link.classList.add('active');
+    }
+
+    function loadMarkdown(page, pushState = true) {
+      setActiveLink(page);
+      fetch(page)
+        .then(response => {
+          if (!response.ok) throw new Error('Page not found');
+          return response.text();
+        })
+        .then(md => {
+          document.getElementById('doc-content').innerHTML = marked.parse(md);
+          if (pushState) {
+            history.pushState({page: page}, '', `#${page.replace(/\.md$/, '')}`);
+          }
+        })
+        .catch(() => {
+          document.getElementById('doc-content').innerHTML =
+            '<h2>Page not found</h2><p>The requested documentation page could not be loaded.</p>';
+        });
+    }
+
+    document.querySelectorAll('.sidebar a[data-page]').forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const page = this.getAttribute('data-page');
+        loadMarkdown(page);
+      });
+    });
+
+    // Handle browser navigation
+    window.addEventListener('popstate', function(event) {
+      if (event.state && event.state.page) {
+        loadMarkdown(event.state.page, false);
+      }
+    });
+
+    // Initial load if hash is present
+    window.addEventListener('DOMContentLoaded', function() {
+      let initial = 'get-started.md';
+      if (location.hash) {
+        const hashPage = location.hash.replace(/^#/, '') + '.md';
+        if (document.querySelector(`.sidebar a[data-page="${hashPage}"]`)) {
+          initial = hashPage;
+        }
+      }
+      loadMarkdown(initial, false);
+    });
+  </script>
 </body>
 </html>
