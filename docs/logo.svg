@@ -1,36 +1,8 @@
-<svg width="300" height="80" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background grid (lattice) -->
-  <g opacity="0.13">
-    <rect x="10" y="10" width="60" height="60" rx="8" stroke="#1e88e5" stroke-width="2" fill="none"/>
-    <line x1="10" y1="30" x2="70" y2="30" stroke="#1e88e5" stroke-width="1"/>
-    <line x1="10" y1="50" x2="70" y2="50" stroke="#1e88e5" stroke-width="1"/>
-    <line x1="30" y1="10" x2="30" y2="70" stroke="#1e88e5" stroke-width="1"/>
-    <line x1="50" y1="10" x2="50" y2="70" stroke="#1e88e5" stroke-width="1"/>
-    <!-- Dots at lattice intersections -->
-    <circle cx="10" cy="10" r="2.5" fill="#1e88e5"/>
-    <circle cx="30" cy="10" r="2.5" fill="#1e88e5"/>
-    <circle cx="50" cy="10" r="2.5" fill="#1e88e5"/>
-    <circle cx="70" cy="10" r="2.5" fill="#1e88e5"/>
-    <circle cx="10" cy="30" r="2.5" fill="#1e88e5"/>
-    <circle cx="30" cy="30" r="2.5" fill="#1e88e5"/>
-    <circle cx="50" cy="30" r="2.5" fill="#1e88e5"/>
-    <circle cx="70" cy="30" r="2.5" fill="#1e88e5"/>
-    <circle cx="10" cy="50" r="2.5" fill="#1e88e5"/>
-    <circle cx="30" cy="50" r="2.5" fill="#1e88e5"/>
-    <circle cx="50" cy="50" r="2.5" fill="#1e88e5"/>
-    <circle cx="70" cy="50" r="2.5" fill="#1e88e5"/>
-    <circle cx="10" cy="70" r="2.5" fill="#1e88e5"/>
-    <circle cx="30" cy="70" r="2.5" fill="#1e88e5"/>
-    <circle cx="50" cy="70" r="2.5" fill="#1e88e5"/>
-    <circle cx="70" cy="70" r="2.5" fill="#1e88e5"/>
-  </g>
-  <!-- Main text -->
-  <text x="90" y="38" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-size="32" fill="#222">Lattice</text>
-  <text x="90" y="65" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-size="28" fill="#1e88e5">AI</text>
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Simple AI node (neural net "dot" connected) accent -->
-  <circle cx="220" cy="55" r="9" fill="#fff" stroke="#1e88e5" stroke-width="2"/>
-  <circle cx="240" cy="45" r="5" fill="#1e88e5"/>
-  <circle cx="235" cy="65" r="4" fill="#90caf9"/>
-  <line x1="229" y1="55" x2="240" y2="45" stroke="#1e88e5" stroke-width="2"/>
-  <line x1="229" y1="55" x2="235" y2="65" stroke="#90caf9" stroke-width="2"/>
+  <circle cx="20" cy="55" r="9" fill="#fff" stroke="#1e88e5" stroke-width="2"/>
+  <circle cx="40" cy="45" r="5" fill="#1e88e5"/>
+  <circle cx="35" cy="65" r="4" fill="#90caf9"/>
+  <line x1="29" y1="55" x2="40" y2="45" stroke="#1e88e5" stroke-width="2"/>
+  <line x1="29" y1="55" x2="35" y2="65" stroke="#90caf9" stroke-width="2"/>
 </svg>
