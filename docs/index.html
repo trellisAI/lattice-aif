@@ -7,10 +7,43 @@
   <style>
     body {
       max-width: 1200px;
-      margin: 2em auto;
+      margin: 0 auto;
       font-family: Arial, sans-serif;
       background: #f6f8fa;
       color: #222;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1em 2em;
+      background: #23272f;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 0.5em;
+    }
+    .header .logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .header img.logo {
+      height: 40px;
+      margin-right: 1em;
+      vertical-align: middle;
+    }
+    .header .doc-title {
+      color: #fff;
+      font-size: 1.5em;
+      font-weight: bold;
+      letter-spacing: 0.03em;
+    }
+    .header .github-link img {
+      height: 32px;
+      transition: filter 0.2s;
+      filter: invert(1);
+    }
+    .header .github-link img:hover {
+      filter: invert(0.5) sepia(1) hue-rotate(185deg) saturate(4);
     }
     .container {
       display: flex;
@@ -50,17 +83,6 @@
       background: #e1e4e8;
       color: #1a1a1a;
     }
-    .sidebar .toggle {
-      font-size: 0.95em;
-      cursor: pointer;
-      margin-right: 0.35em;
-      color: #888;
-      user-select: none;
-      transition: color 0.15s;
-    }
-    .sidebar .toggle.open {
-      color: #0366d6;
-    }
     .sidebar ul ul {
       margin-left: 1.1em;
       border-left: 1.5px solid #eee;
@@ -76,10 +98,20 @@
       .container { flex-direction: column; }
       .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e1e4e8; }
       .markdown-body { padding: 1.2em; }
+      .header { flex-direction: column; align-items: flex-start; gap: 1em; }
     }
   </style>
 </head>
 <body>
+  <header class="header">
+    <div class="logo-container">
+      <img src="logo.svg" class="logo" alt="Lattice AIF logo" />
+      <span class="doc-title">Lattice AIF</span>
+    </div>
+    <a class="github-link" href="https://github.com/trellisAI/lattice-aif" target="_blank" rel="noopener" aria-label="View on GitHub">
+      <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Repository" />
+    </a>
+  </header>
   <div class="container">
     <nav class="sidebar" aria-label="Documentation navigation">
       <ul>
@@ -87,25 +119,22 @@
           <a href="get-started.md" data-page="get-started.md" class="active">Get Started</a>
         </li>
         <li>
-          <span class="toggle" data-toggle="client">&#9654;</span>
-          <span data-toggle="client">Client</span>
-          <ul style="display: none;" data-tree="client">
+          <span>Client</span>
+          <ul>
             <li><a href="client.md" data-page="client.md">Configuration</a></li>
             <!-- Add more subpages here if needed -->
           </ul>
         </li>
         <li>
-          <span class="toggle" data-toggle="server">&#9654;</span>
-          <span data-toggle="server">Server</span>
-          <ul style="display: none;" data-tree="server">
+          <span>Server</span>
+          <ul>
             <li><a href="server-api.md" data-page="server-api.md">API Endpoints</a></li>
             <!-- Add more subpages here if needed -->
           </ul>
         </li>
         <li>
-          <span class="toggle" data-toggle="details">&#9654;</span>
-          <span data-toggle="details">Details</span>
-          <ul style="display: none;" data-tree="details">
+          <span>Details</span>
+          <ul>
             <li><a href="details.md" data-page="details.md">Detail Documentation</a></li>
             <!-- Add more subpages here if needed -->
           </ul>
@@ -122,32 +151,6 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
-    // Sidebar tree logic
-    document.querySelectorAll('.sidebar .toggle').forEach(function(toggleBtn) {
-      toggleBtn.addEventListener('click', function(e) {
-        const treeKey = this.getAttribute('data-toggle');
-        const ul = document.querySelector(`ul[data-tree="${treeKey}"]`);
-        if (ul.style.display === 'block') {
-          ul.style.display = 'none';
-          this.innerHTML = '&#9654;';
-          this.classList.remove('open');
-        } else {
-          ul.style.display = 'block';
-          this.innerHTML = '&#9660;';
-          this.classList.add('open');
-        }
-      });
-    });
-
-    // Expand/collapse section on heading click
-    document.querySelectorAll('.sidebar span[data-toggle]').forEach(function(span) {
-      span.addEventListener('click', function(e) {
-        const treeKey = this.getAttribute('data-toggle');
-        const toggleBtn = document.querySelector(`.toggle[data-toggle="${treeKey}"]`);
-        toggleBtn.click();
-      });
-    });
-
     // Sidebar link click: load markdown and highlight
     function setActiveLink(page) {
       document.querySelectorAll('.sidebar a, .sidebar span').forEach(function(el) {
