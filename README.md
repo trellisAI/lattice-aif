@@ -4,11 +4,11 @@
 
 Welcome to Lattice AIF, an AI framework for building intelligent applications.
 
-## lattice-aif: New AI framework to create Agents
+## Lattice-AIF: New AI framework to create Agents
 
-lattice-aif is an agentic framework and platform designed to build, deploy, and manage intelligent AI agents. LatticeAI Engine provides a unified abstraction layer over diverse Large Language Models (LLMs) and external tools, empowering you to create robust, actionable AI solutions with unprecedented flexibility. The client-server architecture is inspired from Docker client and Docker engine, helps to scale and mange the Agents.
+Lattice-AIF is an agentic framework and platform designed to build, deploy, and manage intelligent AI agents. LatticeAI Engine provides a unified abstraction layer over diverse Large Language Models (LLMs) and external tools, empowering you to create robust, actionable AI solutions with unprecedented flexibility. The client-server architecture is inspired from Docker client and Docker engine, helps to scale and mange the Agents.
 
-## ✨ Why lattice-aif?
+## ✨ Why Lattice-AIF?
 
 In a world of fragmented AI capabilities, LatticeAI brings order and efficiency:
 
@@ -27,7 +27,7 @@ Welcome to the Lattice AIF documentation! This guide will help you get started w
 
 Lattice AIF is an AI framework designed to help you build, deploy, and manage intelligent applications with ease. It provides a robust set of tools to create AI aagents with various capabilities and also seamless integration with your existing workflows.
 
-The client-server architecture enables scalability, modularity, resource optimization, security and flexibility. This helps to build AI agents at scale with ease.
+The client-server architecture enables scalability, modularity, resource optimisation, security and flexibility. This helps to build AI agents at scale with ease.
 
 ## Installation
 
@@ -58,26 +58,27 @@ Depending on your environment, follow the instructions below:
    pip install -r requirements.txt
    ```
 
-3. Run the following command to start the sever(NOT SECURE: WIP)
+3. Run the following command to start the server (NOT SECURE: WIP)
 
    ```bash
    python -m LatticePy.latticeai interactive
    ```
+   The idea is to have two modes: one interactive and the other a daemon mode, utilising a Unix daemon socket that runs continuously as a backend service. 
 
 more details `docs/details.md` 
 
-#### Client Setup ( is directly available as application refer to packages.md)
+#### Client Setup
 
-if you wish to build locally refer client section `docs/details.md`
+The client can be directly installed by adding the executable to the PATH.
+To download the package, refer to `packages.md`
 
+You can also build locally, refer to the client section `docs/details.md`
 
 ### 3. Configuration
 
-Refer to the configuration documentation in the `docs/installation.md` file for advanced and environment-specific setup details.
+Refer to the configuration documentation in the `docs/configuration.md` file for the inital configuration of the set up and get started
 
 ---
-
-For detailed instructions and more examples, please refer to our [Official Documentation]([(https://trellisai.github.io/lattice-aif/details.md)]).
 
 ## 📖 Documentation
 
@@ -99,4 +100,4 @@ We welcome contributions from the community! Whether it's code, documentation, o
 
 ## 📄 License
 
-lattice-aif is released under the [MIT License](LICENSE).
+Lattice-AIF is released under the [MIT License](LICENSE).
