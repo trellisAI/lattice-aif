@@ -38,26 +38,27 @@ Depending on your environment, follow the instructions below:
    pip install -r requirements.txt
    ```
 
-3. Run the following command to start the sever(NOT SECURE: WIP)
+3. Run the following command to start the server (NOT SECURE: WIP)
 
    ```bash
    python -m LatticePy.latticeai interactive
    ```
+   The idea is to have two modes: one interactive and the other a daemon mode, utilising a Unix daemon socket that runs continuously as a backend service. 
 
 more details `docs/details.md` 
 
-#### Client Setup ( is directly available as application refer to packages.md)
+#### Client Setup
 
-if you wish to build locally refer client section `docs/details.md`
+The client can be directly installed by adding the executable to the PATH.
+To download the package, refer to `packages.md`
 
+You can also build locally, refer to the client section `docs/details.md`
 
 ### 3. Configuration
 
-Refer to the configuration documentation in the `docs/installation.md` file for advanced and environment-specific setup details.
+Refer to the configuration documentation in the `docs/configuration.md` file for the inital configuration of the set up and get started
 
 ---
-
-For detailed instructions and more examples, please refer to our [Official Documentation]([(https://trellisai.github.io/lattice-aif/details.md)]).
 
 ## 📖 Documentation
 
