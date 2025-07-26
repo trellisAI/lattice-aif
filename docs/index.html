@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Lattice AIF Documentation</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css"/>
+  <style>
+    body {
+      max-width: 1200px;
+      margin: 0 auto;
+      font-family: Arial, sans-serif;
+      background: #f6f8fa;
+      color: #222;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1em 2em;
+      background: #23272f;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 0.5em;
+    }
+    .header .logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .header img.logo {
+      height: 40px;
+      margin-right: 1em;
+      vertical-align: middle;
+    }
+    .header .doc-title {
+      color: #fff;
+      font-size: 1.5em;
+      font-weight: bold;
+      letter-spacing: 0.03em;
+    }
+    .header .github-link img {
+      height: 32px;
+      transition: filter 0.2s;
+      filter: invert(1);
+    }
+    .header .github-link img:hover {
+      filter: invert(0.5) sepia(1) hue-rotate(185deg) saturate(4);
+    }
+    .container {
+      display: flex;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border-radius: 6px;
+      background: #fff;
+      min-height: 700px;
+    }
+    .sidebar {
+      width: 260px;
+      background: #f3f4f6;
+      padding: 1.5em 0.5em 1.5em 1.5em;
+      border-right: 1px solid #e1e4e8;
+      min-height: 700px;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar li {
+      margin-bottom: 0.6em;
+      cursor: pointer;
+      position: relative;
+    }
+    .sidebar a, .sidebar span {
+      text-decoration: none;
+      color: #222;
+      font-weight: 500;
+      font-size: 1.05em;
+      display: block;
+      padding: 0.2em 0.5em;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .sidebar a.active, .sidebar span.active {
+      background: #e1e4e8;
+      color: #1a1a1a;
+    }
+    .sidebar ul ul {
+      margin-left: 1.1em;
+      border-left: 1.5px solid #eee;
+      padding-left: 0.7em;
+      margin-top: 0.2em;
+      margin-bottom: 0.2em;
+    }
+    .markdown-body {
+      flex: 1;
+      padding: 2em 2.5em 2em 2.5em;
+    }
+    @media (max-width: 900px) {
+      .container { flex-direction: column; }
+      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e1e4e8; }
+      .markdown-body { padding: 1.2em; }
+      .header { flex-direction: column; align-items: flex-start; gap: 1em; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo-container">
+      <img src="logo.svg" class="logo" alt="Lattice AIF logo" />
+      <span class="doc-title">Lattice AIF</span>
+    </div>
+    <a class="github-link" href="https://github.com/trellisAI/lattice-aif" target="_blank" rel="noopener" aria-label="View on GitHub">
+      <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Repository" />
+    </a>
+  </header>
+  <div class="container">
+    <nav class="sidebar" aria-label="Documentation navigation">
+      <ul>
+        <li>
+          <a href="get-started.md" data-page="get-started.md" class="active">Get Started</a>
+        </li>
+        <li>
+          <span>Client</span>
+          <ul>
+            <li><a href="client.md" data-page="client.md">Configuration</a></li>
+            <!-- Add more subpages here if needed -->
+          </ul>
+        </li>
+        <li>
+          <span>Server</span>
+          <ul>
+            <li><a href="server-api.md" data-page="server-api.md">API Endpoints</a></li>
+            <!-- Add more subpages here if needed -->
+          </ul>
+        </li>
+        <li>
+          <span>Details</span>
+          <ul>
+            <li><a href="details.md" data-page="details.md">Detail Documentation</a></li>
+            <!-- Add more subpages here if needed -->
+          </ul>
+        </li>
+        <li>
+          <a href="contribute.md" data-page="contribute.md">Contribute</a>
+        </li>
+      </ul>
+    </nav>
+    <div class="markdown-body" id="doc-content">
+      <h1>Lattice AIF Documentation</h1>
+      <p>Welcome to the documentation for Lattice AIF. Use the navigation sidebar to get started, install the software, and explore the API endpoints.</p>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    // Sidebar link click: load markdown and highlight
+    function setActiveLink(page) {
+      document.querySelectorAll('.sidebar a, .sidebar span').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      const link = document.querySelector(`.sidebar a[data-page="${page}"]`);
+      if (link) link.classList.add('active');
+    }
+
+    function loadMarkdown(page, pushState = true) {
+      setActiveLink(page);
+      fetch(page)
+        .then(response => {
+          if (!response.ok) throw new Error('Page not found');
+          return response.text();
+        })
+        .then(md => {
+          document.getElementById('doc-content').innerHTML = marked.parse(md);
+          if (pushState) {
+            history.pushState({page: page}, '', `#${page.replace(/\.md$/, '')}`);
+          }
+        })
+        .catch(() => {
+          document.getElementById('doc-content').innerHTML =
+            '<h2>Page not found</h2><p>The requested documentation page could not be loaded.</p>';
+        });
+    }
+
+    document.querySelectorAll('.sidebar a[data-page]').forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const page = this.getAttribute('data-page');
+        loadMarkdown(page);
+      });
+    });
+
+    // Handle browser navigation
+    window.addEventListener('popstate', function(event) {
+      if (event.state && event.state.page) {
+        loadMarkdown(event.state.page, false);
+      }
+    });
+
+    // Initial load if hash is present
+    window.addEventListener('DOMContentLoaded', function() {
+      let initial = 'get-started.md';
+      if (location.hash) {
+        const hashPage = location.hash.replace(/^#/, '') + '.md';
+        if (document.querySelector(`.sidebar a[data-page="${hashPage}"]`)) {
+          initial = hashPage;
+        }
+      }
+      loadMarkdown(initial, false);
+    });
+  </script>
+</body>
+</html>
