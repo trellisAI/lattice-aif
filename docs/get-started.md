@@ -1,23 +1,3 @@
-<p align="center">
-  <img src="docs/logo.svg" alt="Lattice AI Logo" width="250"/>
-</p>
-
-Welcome to Lattice AIF, an AI framework for building intelligent applications.
-
-## Lattice-AIF: New AI framework to create Agents
-
-Lattice-AIF is an agentic framework and platform designed to build, deploy, and manage intelligent AI agents. LatticeAI Engine provides a unified abstraction layer over diverse Large Language Models (LLMs) and external tools, empowering you to create robust, actionable AI solutions with unprecedented flexibility. The client-server architecture is inspired from Docker client and Docker engine, helps to scale and mange the Agents.
-
-## ✨ Why Lattice-AIF?
-
-In a world of fragmented AI capabilities, LatticeAI brings order and efficiency:
-
-* **LLM Agnostic:** Seamlessly integrate and switch between any LLM – from cloud-based powerhouses like Google Gemini and OpenAI to local, privacy-focused models like Ollama.
-* **Robust Tool-Calling:** Extend LLM capabilities beyond text generation. Connect your agents to any API, database, or internal system to perform real-world actions.
-* **Agent Orchestration:** Build complex, multi-step, multi-LLM agent workflows with ease, and manage their entire lifecycle.
-* **Lattice Engine:** Inspired by Docker Engine, the arch is designed to benefit from a continuously running, daemonized "Lattice Engine" that provides production-grade reliability, scalability, and resource management for your agents.
-* **Developer-Friendly:** Interact via a powerful Command Line Interface (CLI) for advanced users, and an intuitive platform for broader adoption (coming soon!).
-
 
 ## 🚀 Getting Started
 
@@ -27,7 +7,7 @@ Welcome to the Lattice AIF documentation! This guide will help you get started w
 
 Lattice AIF is an AI framework designed to help you build, deploy, and manage intelligent applications with ease. It provides a robust set of tools to create AI aagents with various capabilities and also seamless integration with your existing workflows.
 
-The client-server architecture enables scalability, modularity, resource optimisation, security and flexibility. This helps to build AI agents at scale with ease.
+The client-server architecture enables scalability, modularity, resource optimization, security and flexibility. This helps to build AI agents at scale with ease.
 
 ## Installation
 
@@ -100,4 +80,4 @@ We welcome contributions from the community! Whether it's code, documentation, o
 
 ## 📄 License
 
-Lattice-AIF is released under the [MIT License](LICENSE).
+lattice-aif is released under the [MIT License](LICENSE).

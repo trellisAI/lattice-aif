@@ -1,0 +1,14 @@
+## IDE and Editor ignores ##
+.idea/             # IntelliJ/PyCharm
+.vscode/           # VS Code
+*.iml              # IntelliJ project files
+*.sublime-project
+*.sublime-workspace
+.DS_Store          # macOS specific
+Thumbs.db          # Windows specific
+
+
+# Common OS and Editor ignores (often covered by language-specific sections, but good for completeness)
+*~
+*.swp
+.DS_Store
