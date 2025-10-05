@@ -8,6 +8,7 @@ Welcome to Lattice AIF, an AI framework for building intelligent applications.
 
 Lattice-AIF is an agentic framework and platform designed to build, deploy, and manage intelligent AI agents. LatticeAI Engine provides a unified abstraction layer over diverse Large Language Models (LLMs) and external tools, empowering you to create robust, actionable AI solutions with unprecedented flexibility. The client-server architecture is inspired from Docker client and Docker engine, helps to scale and mange the Agents.
 
+<img src="docs/latticeaif.drawio.svg" alt="Lattice AI Arch" width="100%"/>
 ## ✨ Why Lattice-AIF?
 
 In a world of fragmented AI capabilities, LatticeAI brings order and efficiency:
