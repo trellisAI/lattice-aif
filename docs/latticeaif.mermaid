@@ -1,0 +1,108 @@
+graph TB
+    subgraph "Client Layer"
+        CLI[Lattice AIF Client CLI]
+        CLI_CONFIG[Configuration Manager]
+        CLI_AGENT[Agent Interface]
+        CLI_WORKFLOW[Workflow Manager]
+    end
+
+    subgraph "Lattice AIF Server"
+        API[API Gateway]
+        
+        subgraph "Core Services"
+            AGENT_MGR[Agent Manager]
+            LLM_MGR[LLM Connection Manager]
+            TOOL_MGR[Tool Server Manager]
+            WORKFLOW_ENGINE[Multi-Agent Workflow Engine]
+            ORCHESTRATOR[Orchestration Layer]
+        end
+        
+        subgraph "Data Layer"
+            CONFIG_DB[(Configuration Store)]
+            STATE_DB[(Agent State Store)]
+        end
+    end
+
+    subgraph "LLM Providers"
+        LLM1[LLM Provider 1<br/>OpenAI/Anthropic]
+        LLM2[LLM Provider 2<br/>Custom Model]
+        LLM3[LLM Provider N]
+    end
+
+    subgraph "Tool Servers"
+        TS1[Tool Server 1]
+        TS1_API1[GET /api/get-tool-functions]
+        TS1_API2[POST /api/get-function-call]
+        TS1_API3[GET /api/get-tool-functions/:function/schema]
+        
+        TS2[Tool Server 2]
+        TS2_API1[GET /api/get-tool-functions]
+        TS2_API2[POST /api/get-function-call]
+        TS2_API3[GET /api/get-tool-functions/:function/schema]
+        
+        TSN[Tool Server N]
+    end
+
+    %% Client to Server connections
+    CLI --> CLI_CONFIG
+    CLI --> CLI_AGENT
+    CLI --> CLI_WORKFLOW
+    
+    CLI_CONFIG -->|Configure LLMs| API
+    CLI_CONFIG -->|Configure Tool Servers| API
+    CLI_CONFIG -->|Create Agents| API
+    CLI_AGENT -->|Communicate with Agent| API
+    CLI_WORKFLOW -->|Setup Multi-Agent Workflows| API
+
+    %% Server Internal connections
+    API --> AGENT_MGR
+    API --> LLM_MGR
+    API --> TOOL_MGR
+    API --> WORKFLOW_ENGINE
+    
+    AGENT_MGR --> ORCHESTRATOR
+    WORKFLOW_ENGINE --> ORCHESTRATOR
+    
+    ORCHESTRATOR --> LLM_MGR
+    ORCHESTRATOR --> TOOL_MGR
+    
+    AGENT_MGR --> CONFIG_DB
+    AGENT_MGR --> STATE_DB
+    LLM_MGR --> CONFIG_DB
+    TOOL_MGR --> CONFIG_DB
+    WORKFLOW_ENGINE --> STATE_DB
+
+    %% Server to LLM connections
+    LLM_MGR -->|API Calls| LLM1
+    LLM_MGR -->|API Calls| LLM2
+    LLM_MGR -->|API Calls| LLM3
+
+    %% Server to Tool Server connections
+    TOOL_MGR -->|Discover Tools| TS1_API1
+    TOOL_MGR -->|Execute Function| TS1_API2
+    TOOL_MGR -->|Get Schema| TS1_API3
+    
+    TOOL_MGR -->|Discover Tools| TS2_API1
+    TOOL_MGR -->|Execute Function| TS2_API2
+    TOOL_MGR -->|Get Schema| TS2_API3
+    
+    TOOL_MGR -->|Tool Operations| TSN
+
+    %% Tool Server internal structure
+    TS1_API1 --> TS1
+    TS1_API2 --> TS1
+    TS1_API3 --> TS1
+    
+    TS2_API1 --> TS2
+    TS2_API2 --> TS2
+    TS2_API3 --> TS2
+
+    style CLI fill:#e1f5ff
+    style API fill:#fff4e6
+    style ORCHESTRATOR fill:#f3e5f5
+    style AGENT_MGR fill:#e8f5e9
+    style LLM_MGR fill:#e8f5e9
+    style TOOL_MGR fill:#e8f5e9
+    style WORKFLOW_ENGINE fill:#e8f5e9
+    style CONFIG_DB fill:#ffe0b2
+    style STATE_DB fill:#ffe0b2
