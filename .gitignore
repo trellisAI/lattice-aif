@@ -17,3 +17,4 @@ Thumbs.db          # Windows specific
 *.egg-info
 __pycache__
 .venv
+build
