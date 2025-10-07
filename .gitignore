@@ -12,3 +12,8 @@ Thumbs.db          # Windows specific
 *~
 *.swp
 .DS_Store
+
+#python specific
+*.egg-info
+__pycache__
+.venv
