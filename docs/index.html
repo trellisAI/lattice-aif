@@ -1,210 +1,338 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Lattice AIF Documentation</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css"/>
-  <style>
-    body {
-      max-width: 1200px;
-      margin: 0 auto;
-      font-family: Arial, sans-serif;
-      background: #f6f8fa;
-      color: #222;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1em 2em;
-      background: #23272f;
-      border-radius: 0 0 8px 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      margin-bottom: 0.5em;
-    }
-    .header .logo-container {
-      display: flex;
-      align-items: center;
-    }
-    .header img.logo {
-      height: 40px;
-      margin-right: 1em;
-      vertical-align: middle;
-    }
-    .header .doc-title {
-      color: #fff;
-      font-size: 1.5em;
-      font-weight: bold;
-      letter-spacing: 0.03em;
-    }
-    .header .github-link img {
-      height: 32px;
-      transition: filter 0.2s;
-      filter: invert(1);
-    }
-    .header .github-link img:hover {
-      filter: invert(0.5) sepia(1) hue-rotate(185deg) saturate(4);
-    }
-    .container {
-      display: flex;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      border-radius: 6px;
-      background: #fff;
-      min-height: 700px;
-    }
-    .sidebar {
-      width: 260px;
-      background: #f3f4f6;
-      padding: 1.5em 0.5em 1.5em 1.5em;
-      border-right: 1px solid #e1e4e8;
-      min-height: 700px;
-    }
-    .sidebar ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .sidebar li {
-      margin-bottom: 0.6em;
-      cursor: pointer;
-      position: relative;
-    }
-    .sidebar a, .sidebar span {
-      text-decoration: none;
-      color: #222;
-      font-weight: 500;
-      font-size: 1.05em;
-      display: block;
-      padding: 0.2em 0.5em;
-      border-radius: 4px;
-      transition: background 0.15s;
-    }
-    .sidebar a.active, .sidebar span.active {
-      background: #e1e4e8;
-      color: #1a1a1a;
-    }
-    .sidebar ul ul {
-      margin-left: 1.1em;
-      border-left: 1.5px solid #eee;
-      padding-left: 0.7em;
-      margin-top: 0.2em;
-      margin-bottom: 0.2em;
-    }
-    .markdown-body {
-      flex: 1;
-      padding: 2em 2.5em 2em 2.5em;
-    }
-    @media (max-width: 900px) {
-      .container { flex-direction: column; }
-      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e1e4e8; }
-      .markdown-body { padding: 1.2em; }
-      .header { flex-direction: column; align-items: flex-start; gap: 1em; }
-    }
-  </style>
-</head>
-<body>
-  <header class="header">
-    <div class="logo-container">
-      <img src="logo.svg" class="logo" alt="Lattice AIF logo" />
-      <span class="doc-title">Lattice AIF</span>
-    </div>
-    <a class="github-link" href="https://github.com/trellisAI/lattice-aif" target="_blank" rel="noopener" aria-label="View on GitHub">
-      <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Repository" />
-    </a>
-  </header>
-  <div class="container">
-    <nav class="sidebar" aria-label="Documentation navigation">
-      <ul>
-        <li>
-          <a href="get-started.md" data-page="get-started.md" class="active">Get Started</a>
-        </li>
-        <li>
-          <span>Client</span>
-          <ul>
-            <li><a href="client.md" data-page="client.md">Configuration</a></li>
-            <!-- Add more subpages here if needed -->
-          </ul>
-        </li>
-        <li>
-          <span>Server</span>
-          <ul>
-            <li><a href="server-api.md" data-page="server-api.md">API Endpoints</a></li>
-            <!-- Add more subpages here if needed -->
-          </ul>
-        </li>
-        <li>
-          <span>Details</span>
-          <ul>
-            <li><a href="details.md" data-page="details.md">Detail Documentation</a></li>
-            <!-- Add more subpages here if needed -->
-          </ul>
-        </li>
-        <li>
-          <a href="contribute.md" data-page="contribute.md">Contribute</a>
-        </li>
-      </ul>
-    </nav>
-    <div class="markdown-body" id="doc-content">
-      <h1>Lattice AIF Documentation</h1>
-      <p>Welcome to the documentation for Lattice AIF. Use the navigation sidebar to get started, install the software, and explore the API endpoints.</p>
-    </div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script>
-    // Sidebar link click: load markdown and highlight
-    function setActiveLink(page) {
-      document.querySelectorAll('.sidebar a, .sidebar span').forEach(function(el) {
-        el.classList.remove('active');
-      });
-      const link = document.querySelector(`.sidebar a[data-page="${page}"]`);
-      if (link) link.classList.add('active');
-    }
-
-    function loadMarkdown(page, pushState = true) {
-      setActiveLink(page);
-      fetch(page)
-        .then(response => {
-          if (!response.ok) throw new Error('Page not found');
-          return response.text();
-        })
-        .then(md => {
-          document.getElementById('doc-content').innerHTML = marked.parse(md);
-          if (pushState) {
-            history.pushState({page: page}, '', `#${page.replace(/\.md$/, '')}`);
-          }
-        })
-        .catch(() => {
-          document.getElementById('doc-content').innerHTML =
-            '<h2>Page not found</h2><p>The requested documentation page could not be loaded.</p>';
-        });
-    }
-
-    document.querySelectorAll('.sidebar a[data-page]').forEach(function(link) {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const page = this.getAttribute('data-page');
-        loadMarkdown(page);
-      });
-    });
-
-    // Handle browser navigation
-    window.addEventListener('popstate', function(event) {
-      if (event.state && event.state.page) {
-        loadMarkdown(event.state.page, false);
-      }
-    });
-
-    // Initial load if hash is present
-    window.addEventListener('DOMContentLoaded', function() {
-      let initial = 'get-started.md';
-      if (location.hash) {
-        const hashPage = location.hash.replace(/^#/, '') + '.md';
-        if (document.querySelector(`.sidebar a[data-page="${hashPage}"]`)) {
-          initial = hashPage;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lattice AIF: Interactive Pitch Deck</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Tech Neutral -->
+    <!-- Application Structure Plan: The SPA is designed as a single-page, vertical narrative that transforms the static pitch deck into an engaging story. The structure follows a logical flow: Hero (Value Prop) -> The Challenge (Problem) -> Our Solution (Interactive Architecture Diagram) -> Core Features (Tabbed Interface) -> Visualizing the Impact (Chart.js Visualization) -> Get Started (Call to Action). This structure was chosen to guide the user from understanding the core problem to seeing the tangible benefits of the solution, using interactivity to enhance comprehension at key points, such as the architecture diagram and the business impact chart, which is more effective for a web experience than static slides. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: "The Problem" pain points. -> Goal: Inform. -> Viz/Presentation: Interactive cards. -> Interaction: Hover effects to draw attention. -> Justification: Breaks up text and creates a more dynamic feel than a simple list. -> Library/Method: HTML/CSS/Tailwind.
+        - Report Info: The three core components (server, tool-server, client). -> Goal: Organize/Inform. -> Viz/Presentation: An interactive architectural diagram. -> Interaction: Clicking/hovering on a component's description highlights the corresponding block in the diagram, visually connecting text and structure. -> Justification: Makes the abstract architecture tangible and easier to understand. -> Library/Method: HTML/CSS/JS.
+        - Report Info: "Core Capabilities". -> Goal: Organize. -> Viz/Presentation: Tabbed content view. -> Interaction: User clicks tabs to reveal detailed content for each capability. -> Justification: Prevents information overload by presenting complex features in focused, digestible chunks. -> Library/Method: HTML/JS.
+        - Report Info: "Business Impact" table. -> Goal: Compare. -> Viz/Presentation: Horizontal grouped bar chart. -> Interaction: Tooltips on hover provide specific data points. -> Justification: A chart provides a much more immediate and powerful comparison of "Before" vs. "With" Lattice AIF than a static table, quantifying the improvement visually. -> Library/Method: Chart.js/Canvas.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
         }
-      }
-      loadMarkdown(initial, false);
-    });
-  </script>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 500px;
+            }
+        }
+        .tab-active {
+            border-color: #3B82F6;
+            color: #3B82F6;
+            background-color: #EFF6FF;
+        }
+        .diagram-highlight {
+            background-color: #3B82F6 !important;
+            color: white !important;
+            transform: scale(1.03);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .component-button-active {
+            background-color: #DBEAFE;
+            border-color: #3B82F6;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Hero Section -->
+        <section id="hero" class="text-center py-20 sm:py-28">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight">
+                Lattice AIF: The Framework for Next-Gen AI Agents
+            </h1>
+            <p class="mt-6 max-w-3xl mx-auto text-lg sm:text-xl text-slate-600">
+                Unify LLMs, Custom Tools, and Complex Workflows with a Single, Scalable Server Architecture.
+            </p>
+            <p class="mt-4 text-2xl font-bold text-blue-600">
+                Stop integrating. Start orchestrating.
+            </p>
+        </section>
+
+        <!-- The Challenge Section -->
+        <section id="problem" class="py-16 sm:py-20">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">The Challenge: Fragmentation & Complexity</h2>
+                <p class="mt-4 text-lg text-slate-600">The current state of building advanced AI is fractured and inefficient, marked by several key pain points.</p>
+            </div>
+            <div class="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-lg font-semibold text-slate-900">LLM Dependency</h3>
+                    <p class="mt-2 text-slate-600">Switching between providers (Gemini, OpenAI, etc.) requires significant refactoring and API management overhead.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-lg font-semibold text-slate-900">Tool Integration Lag</h3>
+                    <p class="mt-2 text-slate-600">Functions and external services are hardcoded, making them difficult to register, manage, and scale across multiple agents.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-lg font-semibold text-slate-900">Workflow Management</h3>
+                    <p class="mt-2 text-slate-600">Orchestrating complex, multi-step tasks involving several agents and tools is manual and lacks a centralized control layer.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h3 class="text-lg font-semibold text-slate-900">High Barrier to Entry</h3>
+                    <p class="mt-2 text-slate-600">Developers spend too much time on infrastructure setup instead of focusing on core agent logic and innovation.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Solution Section -->
+        <section id="solution" class="py-16 sm:py-20 bg-white rounded-2xl my-16 shadow-lg">
+            <div class="text-center px-4">
+                <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">The Solution: An Abstraction Layer</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">Lattice AIF is the central orchestration hub that simplifies complex AI architectures through three core components that standardize interaction. Click on a component below to see its role in the system.</p>
+            </div>
+
+            <div class="mt-12 flex flex-col lg:flex-row items-center justify-center gap-12 px-4">
+                <!-- Interactive Diagram -->
+                <div class="w-full lg:w-1/2 flex flex-col items-center space-y-2">
+                    <div id="diagram-client" class="component-box w-64 text-center p-4 border-2 border-slate-300 rounded-lg bg-slate-100 transition-all duration-300">
+                        <p class="font-bold">lattice-aif client (CLI)</p>
+                        <p class="text-sm">User Interface</p>
+                    </div>
+                    <div class="text-3xl text-slate-400">↑↓</div>
+                    <div id="diagram-server" class="component-box w-80 text-center p-8 border-4 border-blue-500 rounded-lg bg-blue-100 transition-all duration-300 shadow-2xl">
+                        <p class="font-extrabold text-xl text-blue-800">lattice-aif server</p>
+                        <p class="text-sm font-semibold text-blue-700">The Brain: Orchestration & Logic</p>
+                    </div>
+                    <div class="text-3xl text-slate-400">↑↓</div>
+                    <div class="flex space-x-4">
+                        <div id="diagram-llm" class="component-box w-48 text-center p-4 border-2 border-slate-300 rounded-lg bg-slate-100 transition-all duration-300">
+                            <p class="font-bold">LLM Providers</p>
+                            <p class="text-sm">(Gemini, OpenAI, etc.)</p>
+                        </div>
+                        <div id="diagram-tool" class="component-box w-48 text-center p-4 border-2 border-slate-300 rounded-lg bg-slate-100 transition-all duration-300">
+                            <p class="font-bold">lattice tool-server</p>
+                            <p class="text-sm">External Tools</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Component Descriptions -->
+                <div class="w-full lg:w-1/2 mt-8 lg:mt-0">
+                    <div id="component-buttons" class="space-y-4">
+                        <div data-target="diagram-server" class="component-button p-4 border-2 border-slate-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                            <h3 class="font-bold text-lg text-slate-900">The Brain: `lattice-aif server`</h3>
+                            <p class="text-slate-600 mt-1">Abstracts all complex logic, routes LLM requests, manages tool execution, and coordinates multi-agent flows for ultimate scalability and control.</p>
+                        </div>
+                        <div data-target="diagram-tool" class="component-button p-4 border-2 border-slate-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                            <h3 class="font-bold text-lg text-slate-900">The Toolkit: `lattice tool-server`</h3>
+                            <p class="text-slate-600 mt-1">Standardized, self-contained endpoints to register custom tool functions and execute them via simple, consistent APIs.</p>
+                        </div>
+                        <div data-target="diagram-client" class="component-button p-4 border-2 border-slate-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                            <h3 class="font-bold text-lg text-slate-900">The Interface: `lattice-aif client (CLI)`</h3>
+                            <p class="text-slate-600 mt-1">A simple command-line tool to configure all LLMs and tool servers, create agents, and initiate complex workflows.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Core Capabilities Section -->
+        <section id="features" class="py-16 sm:py-20">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Core Capabilities</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">Lattice AIF provides an enterprise-ready foundation for seamless integration and powerful workflows.</p>
+            </div>
+            <div class="mt-12 max-w-4xl mx-auto">
+                <div class="flex border-b border-gray-200">
+                    <button class="tab-button py-4 px-6 block hover:text-blue-500 focus:outline-none font-medium border-b-2 tab-active" data-tab="1">Unified LLM Management</button>
+                    <button class="tab-button py-4 px-6 block hover:text-blue-500 focus:outline-none font-medium border-b-2 border-transparent" data-tab="2">Standardized Tool Calling</button>
+                    <button class="tab-button py-4 px-6 block hover:text-blue-500 focus:outline-none font-medium border-b-2 border-transparent" data-tab="3">Multi-Agent Workflow Engine</button>
+                </div>
+                <div class="py-4">
+                    <div class="tab-content" id="tab-content-1">
+                        <p class="text-slate-600">Configure multiple LLM providers through the CLI and easily assign different models to specific agents. This decouples your agent logic from any single provider, eliminating vendor lock-in and allowing you to use the best model for each task.</p>
+                    </div>
+                    <div class="tab-content hidden" id="tab-content-2">
+                        <p class="text-slate-600">Tools publish their schemas via a standard `GET` endpoint. The `lattice-aif server` handles the intelligent function invocation with a `POST` request, completely removing the need for LLM-specific, hardcoded function-calling translation in your application.</p>
+                    </div>
+                    <div class="tab-content hidden" id="tab-content-3">
+                        <p class="text-slate-600">Define and execute robust, multi-agent workflows where agents can pass tasks and context between each other to achieve a complex goal. This enables solving sophisticated problems like "Research, draft, and summarize a report" through reliable, automated collaboration.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Business Impact Section -->
+        <section id="impact" class="py-16 sm:py-20">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Visualizing the Business Impact</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">Lattice AIF accelerates development cycles and reduces operational friction, transforming key business metrics. The chart below illustrates the shift from legacy methods to the Lattice AIF framework.</p>
+            </div>
+            <div class="mt-12">
+                <div class="chart-container">
+                    <canvas id="impactChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action Section -->
+        <section id="cta" class="py-20 sm:py-28 text-center bg-white my-16 rounded-2xl shadow-lg">
+            <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Build Smarter. Deploy Faster. Orchestrate Better.</h2>
+            <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">We are seeking partners to pilot high-complexity, multi-agent enterprise applications. Let's schedule a deep dive into your first agent design.</p>
+            <div class="mt-8">
+                <a href="#" class="inline-block bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                    Schedule a Demo
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // Interactive Diagram Logic
+            const componentButtons = document.querySelectorAll('.component-button');
+            const diagramBoxes = document.querySelectorAll('.component-box');
+            
+            componentButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.dataset.target;
+                    
+                    diagramBoxes.forEach(box => box.classList.remove('diagram-highlight'));
+                    componentButtons.forEach(btn => btn.classList.remove('component-button-active'));
+                    
+                    document.getElementById(targetId).classList.add('diagram-highlight');
+                    button.classList.add('component-button-active');
+                });
+            });
+
+            // Tabs Logic
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+                    
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('tab-active');
+                        btn.classList.add('border-transparent');
+                    });
+                    button.classList.add('tab-active');
+                    button.classList.remove('border-transparent');
+
+                    tabContents.forEach(content => {
+                        if (content.id === `tab-content-${tabId}`) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            // Chart.js Logic
+            const ctx = document.getElementById('impactChart').getContext('2d');
+            
+            const data = {
+                labels: ['Time to Deployment', 'Tool Reusability', 'Vendor Lock-in', 'Scalability'],
+                datasets: [
+                    {
+                        label: 'Before Lattice AIF',
+                        data: [8, 2, 9, 3], 
+                        backgroundColor: '#9CA3AF', // Gray-400
+                        borderColor: '#6B7280', // Gray-500
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'With Lattice AIF',
+                        data: [2, 9, 1, 8],
+                        backgroundColor: '#3B82F6', // Blue-500
+                        borderColor: '#2563EB', // Blue-600
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }
+                ]
+            };
+
+            const impactChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false,
+                            },
+                            ticks: {
+                                display: false
+                            }
+                        },
+                        y: {
+                           grid: {
+                                display: false
+                           },
+                           ticks: {
+                                font: {
+                                    size: 14,
+                                    weight: '500'
+                                },
+                                color: '#334155' // slate-700
+                           }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                },
+                                color: '#475569' // slate-600
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const metric = context.label;
+                                    const value = context.raw;
+                                    let interpretation = '';
+                                    if (metric === 'Time to Deployment') {
+                                        interpretation = value > 5 ? 'Weeks (Slow)' : 'Days (Fast)';
+                                    } else if (metric === 'Tool Reusability') {
+                                        interpretation = value > 5 ? 'High' : 'Low';
+                                    } else if (metric === 'Vendor Lock-in') {
+                                        interpretation = value > 5 ? 'High (Bad)' : 'Zero (Good)';
+                                    } else if (metric === 'Scalability') {
+                                        interpretation = value > 5 ? 'Built-in' : 'Complex';
+                                    }
+                                    return `${context.dataset.label}: ${interpretation}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
