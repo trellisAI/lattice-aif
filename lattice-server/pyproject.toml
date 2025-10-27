@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-server"
+version = "0.1.0"
+description = "Web server for LatticePy"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "TrellisAI", email = "trellisAI@gmail.com"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pydantic>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",         # Testing framework
+    "black>=24.0.0",         # Code formatter
+    "ruff>=0.3.0",           # High-performance linter and formatter
+    "mypy>=1.9.0",           # Static type checker
+    "httpx>=0.27.0",         # For asynchronous API client tests
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/LatticePy"
+Repository = "https://github.com/yourusername/LatticePy"
+Issues = "https://github.com/yourusername/LatticePy/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["latticepy*"]
+
+# Enable namespace package
+[tool.setuptools.package-dir]
+"" = "src"

@@ -13,6 +13,7 @@ from LatticePy.interfaces.chatinterface import Chatinterface
 from LatticePy.interfaces.clientinterface import VectorDBlist, Promptlist, LatticeTools, LLMmodels, LlmConnections 
 from LatticePy.interfaces.clientinterface import ConnectionModel, PromptModel, ToolsModel
 from LatticePy.interfaces.agentinterface import LatticeAgent
+from LatticePy.interfaces.serverinterface import servertooldata, ToolServer
 
 class ToolsModelReq(ToolsModel):
     toollist: Union[str, List[Dict[str, Any]]] = "[]"
@@ -483,6 +484,60 @@ async def del_agents_info(agent_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ------- Tool Server Endpoints -------------
+    
+@app.get("/api/lattice/toolserver")
+async def get_tool_servers():
+    try:
+        s= servertooldata()
+        return JSONResponse({
+            "Lattice Servers": s.tooldata
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/lattice/toolserver/{server_id}")
+async def get_tool_server(server_id: str):
+    try:
+        s= servertooldata()
+        server_details=s.tooldata
+        return JSONResponse({
+            "Lattice Tool Servers": server_details[server_id]
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/lattice/toolserver/{server_id}")
+async def del_tool_server(server_id: str):
+    try:
+        s= servertooldata()
+        servers=s.tooldata
+        if server_id not in servers.keys():
+            raise HTTPException(status_code=404, detail="Agents not found")
+        if s.delete(server_id):
+            return JSONResponse({
+                "status": f"successfully deleted {server_id}"
+            })
+        else:
+            HTTPException(status_code=500, detail="unable to delete")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/api/lattice/toolserver")
+async def create_lattice_server(request: ToolServer):
+    try:
+        print("server being added")
+        print(request)
+        servertooldata.add(request)
+        return JSONResponse({
+            "status": "successfully added",
+        })
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # -------  vector DB API endpoints ------------
 @app.get("/api/lattice/vectordbs")
 async def list_vectordbs():
@@ -496,7 +551,7 @@ async def list_workflows():
 
 def startwebserver(host, port):
     import uvicorn
-    uvicorn.run('LatticePy.interfaces.webserver:app', host="0.0.0.0", port=port, workers=4)
+    uvicorn.run('LatticePy.interfaces.webserver:app', host="0.0.0.0", port=port, workers=1, reload=True)
 
 if __name__ == "__main__":
     import uvicorn
