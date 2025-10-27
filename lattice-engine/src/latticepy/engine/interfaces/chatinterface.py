@@ -2,7 +2,7 @@
 from LatticePy.interfaces.clientinterface import LLMmodels
 from LatticePy.interfaces.agentinterface import LatticeAgent
 from LatticePy.interfaces.llminterface import llmClient
-from LatticePy.interfaces.serverinterface import ToolServer
+from LatticePy.interfaces.serverinterface import callserver
 from LatticePy.utils.toolcall import ToolCall
 
 available_models = LLMmodels().listdown()
@@ -52,7 +52,7 @@ class Chatinterface:
         print(f"Response from LLM: {iresponse}")
         def final_response(toolresponse) -> str:
             for tool in toolresponse:
-                tres=ToolServer.call(tool['function']['name'], tool['function']['arguments'])
+                tres=callserver(tool['function']['name'], tool['function']['arguments'])
                 recall_opt=toolsob.getrecall(tool['function']['name'])
                 if recall_opt == 'recall':
                     response=self.llm.chat(self.modelinfo.model, prompt, self.message, tools=tools)
