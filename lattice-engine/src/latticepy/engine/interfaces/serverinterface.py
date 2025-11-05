@@ -4,7 +4,7 @@ from typing import Dict, Optional, Any, List
 import requests
 import json
 
-from LatticePy.interfaces.localdatabase import LocalDatabase
+from latticepy.engine.services.localdatabase import LocalDatabase
 
 
 LocalDatabase.create_tables(
@@ -55,9 +55,10 @@ class servertooldata:
         tool_models=[]
         try:
             res=requests.get(f'{url}/get_tool_functions')
+            print(res.json())
             res.raise_for_status()
-            tools=json.loads(res.json)
-            tool_models=[ToolDetails.model_validate(tool) for tool in tools]
+            tools=res.json()
+            tool_models=[ToolDetails.model_validate(tool) for keys, tool in tools.items()]
         except requests.exceptions.RequestException as e:
             print(f"An error occurred while fetching the tools from {url}: {e}")
         except ValidationError:
@@ -101,10 +102,12 @@ class servertooldata:
         if rows:
             for record in rows:
                 server_tools=self._get_tools(record["url"])
+                print('fetched server tools:', server_tools)
                 toolnames={f'{record["id"]}.{tool.name}': record["url"] for tool in server_tools}
+                servertools=[tool.model_dump() for tool in server_tools]
                 self.tools.update(toolnames)
                 self.available_tools.extend(toolnames.keys())
-                return {record["id"]: {**record,"tools":server_tools} for record in rows}
+                return {record["id"]: {**record,"tools":servertools} for record in rows}
         else:
             print("No servers available.")
             return {}

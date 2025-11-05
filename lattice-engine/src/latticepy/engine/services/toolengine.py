@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, model_validator
 from typing import List, Dict, Any, Optional, Literal, Tuple
 import json
 
-from LatticePy.interfaces.clientinterface import LatticeTools
+from latticepy.engine.interfaces.clientinterface import LatticeTools
 
 
 alltools= LatticeTools.list()

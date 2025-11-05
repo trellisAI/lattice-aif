@@ -1,9 +1,9 @@
 
-from LatticePy.interfaces.clientinterface import LLMmodels
-from LatticePy.interfaces.agentinterface import LatticeAgent
-from LatticePy.interfaces.llminterface import llmClient
-from LatticePy.interfaces.serverinterface import callserver
-from LatticePy.utils.toolcall import ToolCall
+from latticepy.engine.interfaces.clientinterface import LLMmodels
+from latticepy.engine.interfaces.agentinterface import LatticeAgent
+from latticepy.engine.interfaces.llminterface import llmClient
+from latticepy.engine.interfaces.serverinterface import callserver
+from latticepy.engine.services.toolengine import ToolCall
 
 available_models = LLMmodels().listdown()
 

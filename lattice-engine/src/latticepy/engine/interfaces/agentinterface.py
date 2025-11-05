@@ -2,10 +2,9 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import json
 
-from LatticePy.interfaces.localdatabase import LocalDatabase
-from LatticePy.interfaces.clientinterface import Promptlist
-
-from LatticePy.utils.toolcall import ToolConfig
+from latticepy.engine.services.localdatabase import LocalDatabase
+from latticepy.engine.interfaces.clientinterface import Promptlist
+from latticepy.engine.services.toolengine import ToolConfig
 
 LocalDatabase.create_tables(
     'latticeagents',
