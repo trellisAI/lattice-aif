@@ -8,7 +8,7 @@ from pydantic import BaseModel, ValidationError
 from typing import Optional
 
 
-from LatticePy.interfaces.localdatabase import LocalDatabase, LocalDBModel
+from latticepy.engine.services.localdatabase import LocalDatabase, LocalDBModel
 
 
 if platform.system() == "Windows":
@@ -69,15 +69,14 @@ class Client:
         cls.config = config
         LocalDatabase(cls.config.DATABASE)
         import multiprocessing as mp
-        from LatticePy.interfaces.webserver import startwebserver
+        from latticepy.engine.services.webserver import startwebserver
         cls.webprocess = mp.Process(target=startwebserver, args=(cls.config.address, cls.config.port))
         cls.webprocess.start()
 
     def stop(self):
         pass
 
-if __name__ == "__main__":
-    # Example usage
+def main():
     parser= argparse.ArgumentParser(description="LatticeAI Client")
     parser.add_argument("run", type=str, help="mode to run the client", choices=["interactive", "daemon"])
     parser.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
@@ -99,4 +98,8 @@ if __name__ == "__main__":
         config=ConfigModel(mode=args.run, address=args.address, port=args.port, config_path=config_path, DATABASE=dbdata)
         conf.update(config)
     config=conf.load(config_path)
-    client = Client.run(config)
+    Client.run(config)
+
+if __name__ == "__main__":
+    # Example usage
+    main()

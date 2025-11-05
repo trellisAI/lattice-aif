@@ -27,6 +27,9 @@ dependencies = [
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.23.0",
     "pydantic>=2.0.0",
+    "toml>=0.10.2",
+    "requests>=2.32.5",
+    "ollama>=0.6.0",
 ]
 
 [project.optional-dependencies]
@@ -36,11 +39,12 @@ dev = [
     "httpx>=0.24.0",
     "black>=23.0",
     "flake8>=6.0",
+
 ]
 
 [project.scripts]
-lattice-server = "latticepy.server.app:main"
-latticepy-server = "latticepy.server.app:main"
+lattice-engine = "latticepy.engine.latticeai:main"
+latticepy-engine = "latticepy.engine.latticeai:main"
 
 [project.urls]
 Homepage = "https://github.com/yourusername/LatticePy"

@@ -9,11 +9,11 @@ import json
 import asyncio
 from datetime import datetime
 
-from LatticePy.interfaces.chatinterface import Chatinterface
-from LatticePy.interfaces.clientinterface import VectorDBlist, Promptlist, LatticeTools, LLMmodels, LlmConnections 
-from LatticePy.interfaces.clientinterface import ConnectionModel, PromptModel, ToolsModel
-from LatticePy.interfaces.agentinterface import LatticeAgent
-from LatticePy.interfaces.serverinterface import servertooldata, ToolServer
+from latticepy.engine.interfaces.chatinterface import Chatinterface
+from latticepy.engine.interfaces.clientinterface import VectorDBlist, Promptlist, LatticeTools, LLMmodels, LlmConnections 
+from latticepy.engine.interfaces.clientinterface import ConnectionModel, PromptModel, ToolsModel
+from latticepy.engine.interfaces.agentinterface import LatticeAgent
+from latticepy.engine.interfaces.serverinterface import servertooldata, ToolServer
 
 class ToolsModelReq(ToolsModel):
     toollist: Union[str, List[Dict[str, Any]]] = "[]"
@@ -551,8 +551,8 @@ async def list_workflows():
 
 def startwebserver(host, port):
     import uvicorn
-    uvicorn.run('LatticePy.interfaces.webserver:app', host="0.0.0.0", port=port, workers=1, reload=True)
+    uvicorn.run('latticepy.engine.services.webserver:app', host="0.0.0.0", port=port, workers=1, reload=True)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run('LatticePy.interfaces.webserver:app', host="0.0.0.0", port=3000, workers=4)
+    uvicorn.run('latticepy.engine.services.webserver:app', host="0.0.0.0", port=3000, workers=4)

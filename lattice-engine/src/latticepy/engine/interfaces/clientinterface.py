@@ -2,8 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional, List
 
 
-from LatticePy.interfaces.llminterface import llmClient
-from LatticePy.interfaces.localdatabase import LocalDatabase
+from latticepy.engine.interfaces.llminterface import llmClient
+from latticepy.engine.services.localdatabase import LocalDatabase
 
 
 

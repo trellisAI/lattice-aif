@@ -3,8 +3,8 @@ import sys
 import json
 import socketserver
 
-from LatticePy.interfaces.clientinterface import VectorDBlist, Promptlist, LatticeTools, LLMmodels, LlmConnections
-from LatticePy.interfaces.agentinterface import LatticeAgent
+from latticepy.engine.interfaces.clientinterface import VectorDBlist, Promptlist, LatticeTools, LLMmodels, LlmConnections
+from latticepy.engine.interfaces.agentinterface import LatticeAgent
 
 SOCKET_PATH = "/tmp/latticeai.sock"
 
