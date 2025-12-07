@@ -114,8 +114,11 @@ class servertooldata:
             for record in rows:
                 server_tools=self._get_tools(record["url"])
                 print('fetched server tools:', server_tools)
-                data.update({f'{record["id"]}.{tool.name}':{'url':record["url"], 'data' : tool.model_dump()} for tool in server_tools})
-            return data
+                toolnames={f'{record["id"]}.{tool.name}': record["url"] for tool in server_tools}
+                servertools=[tool.model_dump() for tool in server_tools]
+                self.tools.update(toolnames)
+                self.available_tools.extend(toolnames.keys())
+                return {record["id"]: {**record,"tools":servertools} for record in rows}
         else:
             print("No servers available.")
             return {}

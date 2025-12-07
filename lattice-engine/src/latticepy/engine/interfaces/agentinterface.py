@@ -4,7 +4,7 @@ import json
 
 from latticepy.engine.services.localdatabase import LocalDatabase
 from latticepy.engine.interfaces.clientinterface import Promptlist
-from latticepy.engine.services.toolengine import ToolData
+from latticepy.engine.services.toolengine import ToolConfig
 
 LocalDatabase.create_tables(
     'latticeagents',
