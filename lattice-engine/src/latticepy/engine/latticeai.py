@@ -19,7 +19,7 @@ else:
     print(f"Unsupported operating system: {platform.system()}")
     sys.exit()
 lattice_folder = ".Lattice"
-lattice_path = os.path.join(home_dir, lattice_folder)
+lattice_path = os.path.join(home_dir, lattice_folder, 'server')
 
 if not os.path.exists(lattice_path):
     try:

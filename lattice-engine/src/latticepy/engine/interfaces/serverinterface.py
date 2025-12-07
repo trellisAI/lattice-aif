@@ -25,7 +25,7 @@ class ToolDetails(BaseModel):
 class ToolServer(BaseModel):
     id: str
     url: str
-    details: List[ToolDetails]
+    details: Optional[Dict[str, Any]] = None
     
 def callserver(toolname, arguments):
     s=servertooldata()
@@ -33,6 +33,7 @@ def callserver(toolname, arguments):
     url=s.tools['toolname']
     tooljson = {'function': function, 'arguments': arguments}
     print(f'calling the function {tooljson}')
+    data={}
     try:
         res=requests.post(url, data=json.dumps(tooljson))
         res.raise_for_status()
@@ -46,9 +47,7 @@ def callserver(toolname, arguments):
 
 class servertooldata:
     def __init__(self ):
-        self.tools={}
-        self.available_tools=[]
-        self.tooldata=self._list()
+        self.tooldata=self.listdetails()
 
     def _get_tools(self, url) -> List:
         # get the tools from each server
@@ -94,12 +93,24 @@ class servertooldata:
         except Exception as e:
             print(f"Error deleting server {server_id}: {e}")
             return False
+        
+    def list(self):
+        rows = LocalDatabase.connect().execute("SELECT * FROM toolservers").fetchall()
+        if rows:
+            data={}
+            for record in rows:
+                data[record["id"]]= {**record}
+            return data
+        else:
+            print("No servers available.")
+            return {}
     
-    def _list(self) -> Dict:
+    def listdetails(self) -> Dict[str, Any]:
         #list the servers
         rows = LocalDatabase.connect().execute("SELECT * FROM toolservers").fetchall()
         print(rows)
         if rows:
+            data={}
             for record in rows:
                 server_tools=self._get_tools(record["url"])
                 print('fetched server tools:', server_tools)
@@ -111,3 +122,4 @@ class servertooldata:
         else:
             print("No servers available.")
             return {}
+        

@@ -9,12 +9,12 @@ available_models = LLMmodels().listdown()
 
 
 class Chatinterface:
-    def __init__(self, message, model, tag):
+    def __init__(self, message, model, agent):
 
         modelob=LLMmodels()
         self.modelinfo = modelob.get(model)
         self.message = message
-        self.tag=tag
+        self.agent=agent
         if self.modelinfo:
             self.llm=llmClient(**(self.modelinfo.source).model_dump())
         else:
@@ -28,8 +28,8 @@ class Chatinterface:
         """
         if not self.modelinfo or not self.message:
             raise ValueError("Model and message must be provided")
-        if self.tag.lower().startswith('agent_'):
-            self.system_prompt = LatticeAgent.get(self.tag)['prompt']
+        if self.agent.lower().startswith('agent_'):
+            self.system_prompt = LatticeAgent.get(self.agent)['prompt']
             return self._tool_chat()
         else:
             c_response, t_response=self.llm.chat(self.modelinfo.model, self.message)
@@ -42,12 +42,10 @@ class Chatinterface:
         """
         # Placeholder for tool call logic
         # You would typically check if the model has tools and call them accordingly
-        toolconfig= LatticeAgent.get(self.tag)['recalltools']
-        toolsob=ToolCall(toolconfig)
-        print('fetching tools')
-        tools=toolsob.active_tools
+        toolsob=ToolLoad(self.agent)
         print('fetching prompt')
-        prompt= LatticeAgent.get(self.tag)['prompt'] or 'You are a helpful assistant.'
+        prompt= LatticeAgent.get(self.agent)['prompt'] or 'You are a helpful assistant.'
+        tools= LatticeAgent.get(self.agent)['tools'] or None
         iresponse = self.llm.chat(self.modelinfo.model, prompt, self.message, tools=tools)
         print(f"Response from LLM: {iresponse}")
         def final_response(toolresponse) -> str:

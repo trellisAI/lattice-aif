@@ -11,32 +11,42 @@ LocalDatabase.create_tables(
     {
         'id': 'TEXT PRIMARY KEY',
         'prompt': 'TEXT',
-        'recalltools': 'TEXT'
-    }   
+        'tools': 'TEXT',
+        'details': 'TEXT'
+
+    }
 )
 
 
 class LatticeAgent(BaseModel):
     id: str
     prompt: Optional[str]  = None
-    recalltools: ToolConfig
+    tools: List[ToolData] = Field(default_factory=list)
 
     def create(self) -> None:
         """
         Create a new custom model with a unique ID.
         """
         if self.prompt and self.prompt not in Promptlist.list():
-            raise ValueError(f"WARNING: prompt not found in Promptlist, considering the {self.prompt}")
+            raise ValueError(f"WARNING: prompt object  {self.prompt} not found in Promptlist")
         prompt_text=Promptlist.get(self.prompt).prompt if self.prompt else ''
         name = f"AGENT_{self.id}"
         try:
-            print(name, prompt_text, self.recalltools)
+            print(name, prompt_text, self.tools)
             print("adding to agents to database")
-            tool_text=json.dumps(self.recalltools.model_dump())
+            toollist=[]
+            tooldetails={}
+            for tool in self.tools:
+                print(f'tool added: {tool.name}')
+                tooldict=tool.genfunctioncall()
+                tooldetails[tool.name]=tool.details.model_dump()
+                toollist.append(tooldict)
+            tool_text=json.dumps(toollist)
+            tool_details=json.dumps(tooldetails)
             conn = LocalDatabase.connect()
             conn.execute(
-                "INSERT INTO latticeagents (id, prompt, recalltools) VALUES (?, ?, ?)",
-                (name, prompt_text, tool_text)
+                "INSERT INTO latticeagents (id, prompt, tools, details) VALUES (?, ?, ?)",
+                (name, prompt_text, tool_text, tool_details)
             )
             conn.connection.commit()
         except Exception as e:
@@ -99,7 +109,7 @@ class LatticeAgent(BaseModel):
     @classmethod
     def clear(cls) -> bool:
         """
-        Clear all custom models.
+        Clear all custom agents.
         """
         try:
             conn = LocalDatabase.connect()
@@ -110,3 +120,9 @@ class LatticeAgent(BaseModel):
         except Exception as e:
             print(f"Error clearing custom models: {e}")
             return False
+        
+    @classmethod
+    def update(cls):
+        "update the tool or prompt data of existing agent"
+        pass
+

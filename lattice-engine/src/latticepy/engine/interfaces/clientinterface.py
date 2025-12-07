@@ -20,10 +20,7 @@ LocalDatabase.create_tables(
     'vectordb',
     {'id': 'TEXT PRIMARY KEY', 'db': 'TEXT', 'url': 'TEXT', 'password': 'TEXT', 'tablename': 'TEXT'}   # renamed column
 )
-LocalDatabase.create_tables(
-    'latticetools',
-    {'id': 'TEXT PRIMARY KEY', 'description': 'TEXT', 'toollist': 'TEXT'}
-)
+
 
 # --- Data Models ---
 
@@ -49,15 +46,6 @@ class Model(BaseModel):
     model: str
     source: ConnectionModel
     details: Optional[Dict[str, Any]] = None
-
-class ToolsModel(BaseModel):
-    id: str
-    description: Optional[str] = None
-    toollist: str = Field(default='[]')  # default to empty list as string
-
-    def __str__(self):
-        return f"Tool(id={self.id}, description={self.description})"
-
 
 # --- Data Management Classes ---
 
@@ -183,12 +171,6 @@ class VectorDBlist(Data):
     def refresh(cls):
         rows = LocalDatabase.connect().execute("SELECT * FROM vectordb").fetchall()
         cls.data = {record["id"]: VectorDB(**record) for record in rows}
-
-class LatticeTools(Data):
-    @classmethod
-    def refresh(cls):
-        rows = LocalDatabase.connect().execute("SELECT * FROM latticetools").fetchall()
-        cls.data = {record["id"]: ToolsModel(**record) for record in rows}
 
 class LLMmodels():
     MODELS: Dict[str, Model] = {}
