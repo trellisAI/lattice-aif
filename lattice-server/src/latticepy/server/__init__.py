@@ -1,10 +1,10 @@
 __version__ = "0.1.0"
 
-from .tool import LatticeTool, lsendpoint, LATTICE_TOOL_REGISTRY
+from .tool import LatticeTool, ToolResponse, ToolResHeaders
 
 __all__ = [
     "LatticeTool",
-    "lsendpoint",
-    "LATTICE_TOOL_REGISTRY",
     "__version__",
+    "ToolResponse",
+    "ToolResHeaders",
 ]

@@ -68,6 +68,8 @@ class Client:
     def run(cls, config):
         cls.config = config
         LocalDatabase(cls.config.DATABASE)
+        os.environ["LATTICE_DB_PATH"] = os.path.join(cls.config.DATABASE.url_path, cls.config.DATABASE.name)
+        #LocalDatabase.drop(table_name='latticeagents')
         import multiprocessing as mp
         from latticepy.engine.services.webserver import startwebserver
         cls.webprocess = mp.Process(target=startwebserver, args=(cls.config.address, cls.config.port))
@@ -76,15 +78,8 @@ class Client:
     def stop(self):
         pass
 
-def main():
-    parser= argparse.ArgumentParser(description="LatticeAI Client")
-    parser.add_argument("run", type=str, help="mode to run the client", choices=["interactive", "daemon"])
-    parser.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
-    parser.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
-    parser.add_argument("--socket", action='store_true', help="to enable socket communication")
-    parser.add_argument("--config", type=str, help="Path to the configuration file", default=None)
-    args= parser.parse_args()
-    
+def main(args):
+    runtime_mode=args.run
     if args.config:
         if os.path.exists(args.config):
             shutil.copy(args.config, os.path.join(lattice_path, "config.toml"))
@@ -94,12 +89,20 @@ def main():
     config_path = os.path.join(lattice_path, "config.toml")
     conf=Config()
     dbdata=LocalDBModel(name='localdb', url_path=lattice_path, db='sqlite3', password=None)
+    
     if not os.path.exists(config_path):
-        config=ConfigModel(mode=args.run, address=args.address, port=args.port, config_path=config_path, DATABASE=dbdata)
+        config=ConfigModel(mode=runtime_mode, address=args.address, port=args.port, config_path=config_path, DATABASE=dbdata)
         conf.update(config)
     config=conf.load(config_path)
     Client.run(config)
 
 if __name__ == "__main__":
     # Example usage
-    main()
+    parser= argparse.ArgumentParser(description="LatticeAI Client")
+    parser.add_argument("run", type=str, help="mode to run the client", choices=["web", "daemon"], default='web')
+    parser.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
+    parser.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
+    parser.add_argument("--socket", action='store_true', help="to enable socket communication")
+    parser.add_argument("--config", type=str, help="Path to the configuration file", default=None)  
+    args= parser.parse_args()
+    main(args)

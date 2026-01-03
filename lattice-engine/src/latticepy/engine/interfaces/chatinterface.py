@@ -1,4 +1,6 @@
 
+import json
+
 from latticepy.engine.interfaces.clientinterface import LLMmodels
 from latticepy.engine.interfaces.agentinterface import LatticeAgent
 from latticepy.engine.interfaces.llminterface import llmClient
@@ -21,21 +23,22 @@ class Chatinterface:
             return("unable to fetch the response")
         self.depth=3
 
-    def chat(self) ->str:
+    def chat(self):
         """
         Sends a message to the LLM and returns the response.
         If the model supports tool calls, it will return the tool call information.
         """
+        print(f"Chatinterface: modelinfo={self.modelinfo}, message={self.message}, agent={self.agent}")
         if not self.modelinfo or not self.message:
             raise ValueError("Model and message must be provided")
-        if self.agent.lower().startswith('agent_'):
-            self.system_prompt = LatticeAgent.get(self.agent)['prompt']
+        if self.agent:
+            #self.system_prompt = LatticeAgent.get(self.agent)['prompt']
             return self._tool_chat()
         else:
-            c_response, t_response=self.llm.chat(self.modelinfo.model, self.message)
-            return c_response
+            response =self.llm.chat(self.modelinfo.model, "", self.message)
+            return response[0], "", {}
     
-    def _tool_chat(self) -> str:
+    def _tool_chat(self):
         """
         Handles chat with tools.
         This method should implement the logic to call tools based on the model's configuration.
@@ -43,31 +46,42 @@ class Chatinterface:
         # Placeholder for tool call logic
         # You would typically check if the model has tools and call them accordingly
         toolsob=ToolLoad(self.agent)
+        agentdetails=LatticeAgent.get(self.agent)
         print('fetching prompt')
-        prompt= LatticeAgent.get(self.agent)['prompt'] or 'You are a helpful assistant.'
-        tools= LatticeAgent.get(self.agent)['tools'] or None
+        prompt= agentdetails['prompt'] or 'You are a helpful assistant.'
+        tools= agentdetails['tools'] or None
+        tools=json.loads(tools) if tools else None
+        print(f"Using prompt: {prompt}")
+        print(f"Using tools: {[tool['function']['name'] for tool in tools] if tools else 'No tools'}")
         iresponse = self.llm.chat(self.modelinfo.model, prompt, self.message, tools=tools)
         print(f"Response from LLM: {iresponse}")
-        def final_response(toolresponse) -> str:
+        def final_response(toolresponse):
+            #creating various interfaces for final response
             for tool in toolresponse:
-                tres=callserver(tool['function']['name'], tool['function']['arguments'])
+                tresponse =callserver(tool['function']['name'], tool['function']['arguments'])
+                print(f'Tool response: {tresponse}')
+                if tresponse.success:
+                    tres=tresponse.data
+                else:
+                    tres=f"Error calling tool {tool['function']['name']}: {tresponse.error}"
                 recall_opt=toolsob.getrecall(tool['function']['name'])
-                if recall_opt == 'recall':
+                print(f"Recall option: {recall_opt}")
+                if recall_opt == 'flow':
                     response=self.llm.chat(self.modelinfo.model, prompt, self.message, tools=tools)
                     fresponse=final_response(toolresponse)
-                    return fresponse
-                if recall_opt == 'filter':
-                    response=self.llm.chat(self.modelinfo.model, prompt, f'Filter from data provided as reponse to the query {self.message} and precisely answer :{tres}')
-                    return response[0]
-                if recall_opt == 'direct':
+                    return fresponse, "", {}
+                if recall_opt == 'rephrase':
+                    response=self.llm.chat(self.modelinfo.model, prompt, f'use the data provided precisely answer {tres} in suitable format, data: {self.message}')
+                    return response[0], "", {}
+                if recall_opt == 'pass':
                     response=self.llm.chat(self.modelinfo.model, prompt, f'Please find the data as requested {self.message} :{tres}')
-                    return response[0]
-                response=self.llm.chat(self.modelinfo.model, prompt, f'Rephrase the data provided in suitable format:{tres}')
-                return response[0]
-            else:
-                return iresponse[0]
+                    return response[0], "", {}
+                if recall_opt == 'RAG':
+                    pass
+                else:
+                    return iresponse[0], "", {}
         if iresponse[1] != [{}]:
             fresponse= final_response(iresponse[1])
             return fresponse
         else:
-            return iresponse[0]
+            return iresponse[0], "", {}

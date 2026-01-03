@@ -10,6 +10,7 @@ from latticepy.engine.services.localdatabase import LocalDatabase
 tooldata = servertooldata().tooldata
 
 
+"""
 class ToolDetails(BaseModel):
     action: Literal['rephrase', 'recall', 'filter', 'flow', 'RAG'] = Field('rephrase', description="Action to be taken with the tool. Options are 'rephrase', 'recall', 'filter', or 'direct'.")
     followon: Optional[str] = Field(None, description="Tool name to be called, if applicable. when the action is recall, this field is required.")
@@ -25,6 +26,7 @@ class ToolDetails(BaseModel):
             raise ValueError("When action is 'recall', 'followon' must be provided.")
         return values
 
+
 class ToolData(BaseModel):
     name: str
     prompt: str
@@ -33,10 +35,6 @@ class ToolData(BaseModel):
 
     @model_validator(mode='before')
     def validateschema(cls, values):
-        """Validate the schema using jsonschema based on the input values.
-
-        This runs before model creation and inspects the provided `paramschema`.
-        """
         paramschema = values.get('paramschema') if isinstance(values, dict) else None
         if paramschema:
             try:
@@ -46,9 +44,8 @@ class ToolData(BaseModel):
         return values
         
     def genfunctioncall(self) -> Dict[str, Any]:
-        """
-        Generate a function call dictionary based on the tool's name and provided parameters.
-        """
+
+
         return {
             "type": "function",
             "function": {
@@ -57,7 +54,8 @@ class ToolData(BaseModel):
                     "parameters": self.paramschema["parameters"]
                 }
         }
-    
+
+"""
 
 class ToolLoad:
     """
@@ -67,12 +65,15 @@ class ToolLoad:
 
     def __init__(self, agentname):
         self.agentname = agentname
+        print(f"Loading tools for agent: {agentname}")
         conn=LocalDatabase.connect()
-        cursor=conn.execute("SELECT tools FROM latticeagents WHERE id=?", (f'AGENT_{agentname}',))
+        cursor=conn.execute("SELECT details FROM latticeagents WHERE id=?", (f'{agentname}',))
         row=cursor.fetchone()
+        print(f"Fetched tool details from database: {row['details']}")
         if not row:
             raise ValueError(f"Agent {agentname} not found in database.")
-        self.tooldetails=json.loads(row['details']) if 'details' in row else {}
+        self.tooldetails=json.loads(row['details'])
+        print(f"Tool details loaded: {self.tooldetails}")
 
     @staticmethod
     def get_server(toolname) -> str | None :
@@ -86,7 +87,10 @@ class ToolLoad:
         """
         Determines the recall option for a given tool.
         """
-        return self.tooldetails.get(tool, {})
+        print(f"Fetching recall option for tool: {tool} and {self.tooldetails}")
+        details= self.tooldetails.get(tool, {})
+        print(f"Tool details: {details}")
+        return details.get('action', 'rephrase')
     
     def checktool(self, toolname) -> bool:
         """

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Depends, status
+from fastapi import FastAPI, HTTPException, Request, Response, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -44,7 +44,6 @@ class Message(BaseModel):
     role: str
     content: str
     more: Optional[str] = None
-    name: Optional[str] = None
 
 class Choice(BaseModel):
     index: int
@@ -52,12 +51,11 @@ class Choice(BaseModel):
     finish_reason: str
 
 class ChatRequest(BaseModel):
-    agent: str
+    agent: Optional[str] = None
     model: str
     messages: List[Message]
     stream: Optional[bool] = False
     options: Optional[dict] = None
-    template: Optional[str] = None
     format: Optional[str] = None
 
 class ChatCompletionResponse(BaseModel):
@@ -87,18 +85,19 @@ async def generate_ai_response(messages, model, tag):
 
     last_message = user_messages[-1].content
 
-    # Very simple response logic
     modelo=LLMmodels()
     models=(modelo.list()).keys()
+    print(models)
     if model not in models:
-        return f"Model {model} not found."
+        return f"Model {model} not found.", '', {}
     try:
         print("calling chat interface")
         reply = Chatinterface(last_message, model, tag)
-        return reply.chat()
+        llmresponse, agent_response, agent_headers = reply.chat()
+        return llmresponse, agent_response, agent_headers
     except Exception as e:
         print(e)
-        return "Thank you for your message. Unable to reply to your message."
+        return "Thank you for your message. Unable to reply to your message.", '', {}
 
 # Helper function to count tokens (simplified)
 def count_tokens(messages):
@@ -146,11 +145,12 @@ async def get_openapi():
 @app.post("/api/lattice/chat", response_model=Union[ChatCompletionResponse, None])
 async def chatwithagent(request: ChatRequest):
     completion_id = f"chatcmpl-{str(uuid.uuid4())}"
+    print("Received chat request:", request)
     ai_response, additonal_context, headers = await generate_ai_response(request.messages, request.model, request.agent)
     completion_tokens = count_tokens([Message(role="assistant", content=ai_response)])
     prompt_tokens = count_tokens(request.messages)
     print(additonal_context)
-    response = {
+    response_data = {
         "id": completion_id,
         "object": "chat.completion",
         "created": int(time.time()),
@@ -173,7 +173,7 @@ async def chatwithagent(request: ChatRequest):
             "total_tokens": prompt_tokens + completion_tokens
         }
     }
-    return response
+    return response_data
 
 
 
@@ -324,6 +324,7 @@ async def create_lattice_agents(request: LatticeAgent):
     try:
         # Here you would implement the logic to create a model
         # For now, we just return a dummy response
+        print("Creating agent:", request)
         request.create()
         return JSONResponse({
             "status": "success",
@@ -376,6 +377,20 @@ async def del_agents_info(agent_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.put("/api/lattice/agents/{agent_id}")
+async def update_agent_info(agent_id: str, request):
+    try:
+        agents=LatticeAgent.listdown()
+        if agent_id not in agents:
+            raise HTTPException(status_code=404, detail="Agents not found")
+        print("updating agent:", request)
+        agent_details = LatticeAgent.update(agent_id, request)
+        return JSONResponse({
+            "status": "success",
+            "agent": f"Agent {agent_id} updated"
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ------- Tool Server Endpoints -------------
     
@@ -389,15 +404,32 @@ async def get_tool_servers():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.get("/api/lattice/toolserver/{server_id}")
-async def get_tool_server(server_id: str):
+@app.get("/api/lattice/tools/{server_id}")
+async def get_tool_server_details(server_id: str):
+    try:
+        s= servertooldata()
+        servers=s.server_tools
+        #print(servers)
+        if server_id not in servers.keys():
+            raise HTTPException(status_code=404, detail="Agents not found")
+        server_details=servers[server_id]
+        return JSONResponse({
+            "Lattice Tool Server": server_details
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/lattice/tools")
+async def get_tool_server():
     try:
         s= servertooldata()
         server_details=s.tooldata
+        print("got all tools from all servers")
         return JSONResponse({
-            "Lattice Tool Servers": server_details[server_id]
+            "Lattice Tools": server_details
         })
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/lattice/toolserver/{server_id}")
@@ -405,6 +437,7 @@ async def del_tool_server(server_id: str):
     try:
         s= servertooldata()
         servers=s.tooldata
+        print(servers)
         if server_id not in servers.keys():
             raise HTTPException(status_code=404, detail="Agents not found")
         if s.delete(server_id):
@@ -447,4 +480,4 @@ def startwebserver(host, port):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run('latticepy.engine.services.webserver:app', host="0.0.0.0", port=3000, workers=4)
+    uvicorn.run('latticepy.engine.services.webserver:app', host="0.0.0.0", port=3000, workers=1, reload=True)

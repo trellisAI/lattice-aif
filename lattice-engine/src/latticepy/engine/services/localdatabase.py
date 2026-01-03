@@ -63,6 +63,7 @@ class LocalDatabase:
 
     @staticmethod
     def drop(table_name: str):
+        #db_path=os.environ.get("LATTICE_DB_PATH")
         drop_query=f"DROP TABLE IF EXISTS {table_name}"
         cur = LocalDatabase.connect()
         cur.execute(drop_query)

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, Literal
 
 
 from latticepy.engine.interfaces.llminterface import llmClient
@@ -35,9 +35,16 @@ class VectorDB(BaseModel):
     password: str
     tablename: str   # renamed from 'table'
 
+llmSevers=Literal[
+    'ollama',
+    'google',
+    'openai',
+    'claude'
+]
+
 class ConnectionModel(BaseModel):
     id: str
-    source: Optional[str] = 'ollama'
+    source: llmSevers
     url: str
     api_key: Optional[str]
 
