@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request, Response, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import List, Any, Dict, Optional, Union
 import uuid
@@ -10,13 +11,11 @@ import asyncio
 from datetime import datetime
 
 from latticepy.engine.interfaces.chatinterface import Chatinterface
-from latticepy.engine.interfaces.clientinterface import VectorDBlist, Promptlist, LatticeTools, LLMmodels, LlmConnections 
-from latticepy.engine.interfaces.clientinterface import ConnectionModel, PromptModel, ToolsModel
+from latticepy.engine.interfaces.clientinterface import VectorDBlist, Promptlist, LLMmodels, LlmConnections 
+from latticepy.engine.interfaces.clientinterface import ConnectionModel, PromptModel
 from latticepy.engine.interfaces.agentinterface import LatticeAgent
 from latticepy.engine.interfaces.serverinterface import servertooldata, ToolServer
 
-class ToolsModelReq(ToolsModel):
-    toollist: Union[str, List[Dict[str, Any]]] = "[]"
 
 app = FastAPI(  
     title="Lattice server",
@@ -33,11 +32,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Security
+security = HTTPBearer()
+
+# In-memory database (replace with proper DB in production)
+API_KEYS = {"sk-test123456789": "test-user"}
+
 # --- Pydantic Models ---
 
-
-
-class ChatMessage(BaseModel):
+class Message(BaseModel):
     role: str
     content: str
     more: Optional[str] = None
@@ -50,10 +53,19 @@ class Choice(BaseModel):
 class ChatRequest(BaseModel):
     agent: Optional[str] = None
     model: str
-    messages: List[ChatMessage]
+    messages: List[Message]
     stream: Optional[bool] = False
     options: Optional[dict] = None
     format: Optional[str] = None
+
+class ChatCompletionResponse(BaseModel):
+    id: str
+    object: str = "chat.completion"
+    created: int
+    model: str
+    headers: Dict[str, Any]
+    choices: List[Choice]
+    usage: Dict[str, int]
 
 # --- Helper Functions ---
 
@@ -229,9 +241,6 @@ async def delete_connection(connection_id: str):
 async def list_prompts():
     try:
         prompts = Promptlist.listdown()
-        if not prompts:
-            raise HTTPException(status_code=404, detail="No prompts found")
-        
         return JSONResponse({
             "prompts": list(prompts)
         })
@@ -308,182 +317,6 @@ async def get_model_details(model_id: str):
         "model": model.model_dump()
     }
 
-# -------  tools API endpoints ------------
-@app.post("/api/lattice/tools")
-async def add_tools(request: ToolsModelReq):
-    try:
-        if not request.id or not request.toollist:
-            raise HTTPException(status_code=400, detail="ID and tools are required")
-        # Check if the tools with the same ID already exist
-        existing_tools = LatticeTools.list()
-        if request.id in existing_tools:
-            raise HTTPException(status_code=400, detail="Tools with this ID already exist")
-        # Add the tools to the list
-        import json
-        if isinstance(request.toollist, list):
-            request.toollist = json.dumps(request.toollist)
-        else:
-            raise HTTPException(status_code=400, detail="Tools list must be a JSON string with list of tools within or list of tools")
-        # Add the tools to the LatticeTools
-        print("Adding tools:", request)
-        LatticeTools.add(request.id, request)
-        return JSONResponse({
-            "status": "success",
-            "tools_id": request.id,
-            "message": "Tools created successfully"
-        })
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-       
-@app.get("/api/lattice/tools")
-async def list_tools():
-    try:
-        tools = list(LatticeTools.listdown())
-        if not tools:
-            raise HTTPException(status_code=404, detail="No tools found")
-        
-        return JSONResponse({
-            "tools": tools
-        })
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.get("/api/lattice/tools/{tools_id}")
-async def get_tools(tools_id: str):
-    try:
-        tools = LatticeTools.get(tools_id)
-        if not tools:
-            raise HTTPException(status_code=404, detail="Tools not found")
-        
-        return JSONResponse({
-            "tools": tools.model_dump()
-        })
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-#@app.put("/api/lattice/tools/{tools_id}")
-    
-@app.delete("/api/lattice/tools/{tools_id}")
-async def delete_tools(tools_id: str):
-    try:
-        if tools_id not in LatticeTools.list():
-            raise HTTPException(status_code=404, detail="Tools not found")
-        
-        # Delete the tools
-        LatticeTools.delete(tools_id)
-        return JSONResponse({
-            "status": "success",
-            "tools_id": tools_id,
-            "message": "Tools deleted successfully"
-        })
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.get("/api/lattice/tools/{tools_id}/functions")
-async def get_tool_functions(tools_id: str):
-    try:
-        alltools= LatticeTools.list()
-        if tools_id not in alltools:
-            raise HTTPException(status_code=404, detail="Tools not found")
-        toolinfo=(LatticeTools.get(tools_id)).toollist
-        import json
-        toolfunctions=json.loads(toolinfo)
-        function=[]
-        for fun in toolfunctions:
-            function.append(fun.get('function').get('name'))
-        return JSONResponse({
-            'functions': function
-        })   
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/lattice/tool/functions")
-async def get_all_functions():
-    try:
-        
-        alltools= LatticeTools.list()
-        print(alltools)
-        funcs=[]
-        import json
-        for tool in alltools:
-            print(tool)
-            toolinfo=(LatticeTools.get(tool)).toollist
-            print(toolinfo)
-            toolfunctions=json.loads(toolinfo)
-            for fun in toolfunctions:
-                funcs.append(fun.get('function').get('name'))
-        return JSONResponse({
-            'functions': funcs
-        })
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.get("/api/lattice/tool/functions/{func_id}")
-async def get_functions_details(func_id: str):
-    try:
-        alltools= LatticeTools.list()
-        print(alltools)
-        import json
-        for tool in alltools:
-            print(tool)
-            toolinfo=(LatticeTools.get(tool)).toollist
-            print(toolinfo)
-            toolfunctions=json.loads(toolinfo)
-            for fun in toolfunctions:
-                if fun.get('function').get('name') == func_id:
-                    return JSONResponse({
-                        'function_details': fun.get('function')
-                    })
-        else:
-            JSONResponse({
-                'details': 'No such function found'
-
-            })
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# -------  chat API endpoints ------------
-@app.post("/api/chat")
-@app.post("/api/lattice/chat")
-async def chat(req: ChatRequest):
-    try:
-        if not req.messages or len(req.messages) == 0:
-            raise HTTPException(status_code=400, detail="No messages provided")
-        ai_response=await generate_ai_response(req.messages, req.model, req.tag)
-        if not ai_response:
-            raise HTTPException(status_code=500, detail="Failed to generate AI response")
-        if req.stream:
-            async def streamer():
-                timestamp = get_timestamp()
-                # Simulate streaming chat response
-                # Yield initial response
-                words = ai_response.split(" ")
-                for i, word in enumerate(words):
-                    await asyncio.sleep(0.05) 
-                    yield json.dumps({
-                        "model": req.model,
-                        "created_at": timestamp,
-                        "message": {
-                            "role": "assistant",
-                            "content": word
-                        },
-                        "done": False
-                    })
-                    await asyncio.sleep(0.1)
-
-            return StreamingResponse(streamer(), media_type="application/json")
-
-        return JSONResponse({
-            "model": req.model,
-            "created_at": get_timestamp(),
-            "message": {
-                "role": "assistant",
-                "content": ai_response
-            },
-            "done": True
-        })
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 # -------  agent API endpoints ------------
 @app.post("/api/lattice/agents")
@@ -499,7 +332,7 @@ async def create_lattice_agents(request: LatticeAgent):
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 @app.get("/api/lattice/agents")
 async def get_lattice_agents():
     try:
@@ -511,6 +344,7 @@ async def get_lattice_agents():
             "Lattice Agents": agents
         })
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.get("/api/lattice/agents/{agent_id}")

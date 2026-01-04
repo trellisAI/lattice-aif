@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import List, Dict, Any, Optional, Literal, Tuple
 import json
+import jsonschema
 
 from latticepy.engine.interfaces.serverinterface import servertooldata
 from latticepy.engine.services.localdatabase import LocalDatabase
@@ -29,9 +30,8 @@ class ToolDetails(BaseModel):
 class ToolData(BaseModel):
     name: str
     prompt: str
-    details: Optional[Dict[str, Any]] = Field(default_factory=dict, description="A dictionary for additional details about the tool.")
-    action: Literal['rephrase', 'recall', 'filter', 'direct'] = Field('rephrase', description="Action to be taken with the tool. Options are 'rephrase', 'recall', 'filter', or 'direct'.")
-    toolcall: Optional[str] = Field(None, description="Tool name to be called, if applicable. when the action is recall, this field is required.")
+    paramschema: Dict[str, Any]
+    details: ToolDetails
 
     @model_validator(mode='before')
     def validateschema(cls, values):
@@ -59,7 +59,7 @@ class ToolData(BaseModel):
 
 class ToolLoad:
     """
-    A class to handle tool calls in LatticePy.
+    A class to load tools of latticepy agents
     It manages the configuration and execution of tools based on the model's capabilities.
     """
 
@@ -83,7 +83,7 @@ class ToolLoad:
         server = tooldata.get(toolname, None)
         return server
 
-    def getrecall(self, tool) -> Tuple[str, ...]:
+    def getrecall(self, tool) -> Dict[str, Any]:
         """
         Determines the recall option for a given tool.
         """
