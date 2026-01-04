@@ -4,7 +4,7 @@ import json
 
 from latticepy.engine.services.localdatabase import LocalDatabase
 from latticepy.engine.interfaces.clientinterface import Promptlist
-from latticepy.engine.services.toolengine import ToolConfig
+#from latticepy.engine.services.toolengine import ToolData
 
 LocalDatabase.create_tables(
     'latticeagents',
@@ -17,36 +17,35 @@ LocalDatabase.create_tables(
     }
 )
 
+#should we add memory field also to the agent?
 
 class LatticeAgent(BaseModel):
     id: str
     prompt: Optional[str]  = None
-    tools: List[ToolData] = Field(default_factory=list)
+    tools:  List[Dict[str, Any]] = Field(..., description="List of tool function definitions.")
 
     def create(self) -> None:
         """
         Create a new custom model with a unique ID.
         """
-        if self.prompt and self.prompt not in Promptlist.list():
-            raise ValueError(f"WARNING: prompt object  {self.prompt} not found in Promptlist")
-        prompt_text=Promptlist.get(self.prompt).prompt if self.prompt else ''
+        #if self.prompt and self.prompt not in Promptlist.list():
+        #    raise ValueError(f"WARNING: prompt object  {self.prompt} not found in Promptlist")
+        prompt_text=Promptlist.get(self.prompt).prompt if self.prompt in Promptlist.list()  else self.prompt
         name = f"AGENT_{self.id}"
         try:
             print(name, prompt_text, self.tools)
             print("adding to agents to database")
-            toollist=[]
             tooldetails={}
+            #tool_text=json.dumps(toollist)
             for tool in self.tools:
-                print(f'tool added: {tool.name}')
-                tooldict=tool.genfunctioncall()
-                tooldetails[tool.name]=tool.details.model_dump()
-                toollist.append(tooldict)
-            tool_text=json.dumps(toollist)
-            tool_details=json.dumps(tooldetails)
+                tooldetails[tool['function']['name']]=tool.get('details', {})
+                tool.pop('details', None)
+            tool_text=json.dumps(self.tools)
+            tooldetails=json.dumps(tooldetails)
             conn = LocalDatabase.connect()
             conn.execute(
-                "INSERT INTO latticeagents (id, prompt, tools, details) VALUES (?, ?, ?)",
-                (name, prompt_text, tool_text, tool_details)
+                "INSERT INTO latticeagents (id, prompt, tools, details) VALUES (?, ?, ?, ?)",
+                (name, prompt_text, tool_text, tooldetails)
             )
             conn.connection.commit()
         except Exception as e:
@@ -121,8 +120,24 @@ class LatticeAgent(BaseModel):
             print(f"Error clearing custom models: {e}")
             return False
         
-    @classmethod
-    def update(cls):
+    @staticmethod
+    def update(agent_id: str, data) -> None:
         "update the tool or prompt data of existing agent"
-        pass
-
+        try:
+            conn = LocalDatabase.connect()
+            if data['prompt'] is not None:
+                conn.execute(
+                    "UPDATE latticeagents SET prompt = ? WHERE id = ?",
+                    (data['prompt'], agent_id)
+                )
+            if data['tools'] is not None:
+                tool_text=json.dumps(data['tools'])
+                conn.execute(
+                    "UPDATE latticeagents SET tools = ? WHERE id = ?",
+                    (tool_text, agent_id)
+                )
+            conn.connection.commit()
+            print(f"Agent {agent_id} updated successfully.")
+        except Exception as e:
+            print(f"Error updating agent {agent_id}: {e}")
+            raise ValueError("Error updating agent: {e}")

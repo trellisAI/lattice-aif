@@ -1,0 +1,3 @@
+fastapi>=0.95
+uvicorn[standard]>=0.22
+psutil>=5.9
