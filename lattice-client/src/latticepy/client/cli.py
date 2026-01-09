@@ -20,7 +20,6 @@ import argparse
 import getpass
 import json
 import os
-import platform
 import stat
 import sys
 from pathlib import Path
@@ -260,7 +259,9 @@ def chat(llm: str, agent: Optional[str] = None) -> None:
 
         request = ChatRequest(agent=agent, model=llm, messages=[Message(role="user", content=user_input)])
         try:
-            resp = session.post(endpoint, json=request.model_dump(), timeout=session.request_timeout)
+            # pydantic v2 uses model_dump(), v1 uses dict(); using model_dump if available
+            payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
+            resp = session.post(endpoint, json=payload, timeout=session.request_timeout)
         except Exception as e:
             print(f"Network error posting chat request: {e}", file=sys.stderr)
             continue
