@@ -1,0 +1,7 @@
+pytest
+requests-mock
+pytest-mock
+toml
+pydantic>=1.10
+requests
+urllib3
