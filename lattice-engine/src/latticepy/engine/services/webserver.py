@@ -120,7 +120,7 @@ async def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(sec
 
 @app.get("/api/lattice/version")
 async def version():
-    return {"version": "0.0.97"}
+    return {"version": "0.0.1"}
 
 @app.get("/api/lattice/tags")
 async def get_all_models():

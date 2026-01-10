@@ -1,18 +1,6 @@
 #!/usr/bin/env python3
 """
 Lattice Client CLI - improved and hardened version.
-
-This file contains fixes for:
-- robust config loading/saving with secure permissions
-- requests.Session usage with retries and timeouts
-- defensive parsing of tool schemas
-- fixed subclass __init__ for RAG/MCPCliOptions
-- better handling of missing environment variables / defaults
-- tolerant Pydantic v1 / v2 usage when validating chat responses
-- safer file handling using pathlib
-
-This is intended as an iterative improvement to make the module production-ready.
-More improvements (tests, logging configuration, CLI UX) are recommended.
 """
 from __future__ import annotations
 
@@ -25,6 +13,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import logging
+import logging.handlers
 import requests
 import toml
 from pydantic import BaseModel
@@ -33,18 +23,67 @@ from urllib.parse import urljoin
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from . import init_client_home, default_client_dir
+
+# Initialize module-level logger after reading environment defaults
+LOG_NAME = "latticeclient"
+
+
+def setup_logging(level: Optional[str] = None, logfile: Optional[str] = None) -> logging.Logger:
+    """
+    Configure logging for the CLI. Reads defaults from environment variables:
+    - LAT_CL_LOG_LEVEL (e.g. DEBUG, INFO)
+    - LAT_CL_LOG_FILE (path to log file)
+    The `level` and `logfile` parameters override the environment settings.
+    """
+    env_level = os.getenv("LAT_CL_LOG_LEVEL", "INFO")
+    env_file = os.getenv("LAT_CL_LOG_FILE")
+    chosen_level = (level or env_level).upper()
+    numeric_level = getattr(logging, chosen_level, logging.INFO)
+
+    logger = logging.getLogger(LOG_NAME)
+    if logger.handlers:
+        # Avoid adding multiple handlers on repeated imports
+        logger.setLevel(numeric_level)
+        return logger
+
+    logger.setLevel(numeric_level)
+    formatter = logging.Formatter(
+        "%(asctime)s %(levelname)s [%(name)s] %(message)s", "%Y-%m-%d %H:%M:%S"
+    )
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    stream_handler.setLevel(numeric_level)
+    logger.addHandler(stream_handler)
+
+    path = logfile or env_file
+    if path:
+        try:
+            fh = logging.handlers.RotatingFileHandler(path, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
+            fh.setFormatter(formatter)
+            fh.setLevel(numeric_level)
+            logger.addHandler(fh)
+        except Exception:
+            # If file handler can't be created, keep running with console logging
+            logger.exception("Failed to create log file handler; continuing with console logging")
+
+    # Keep requests' debug logging quieter unless debug enabled for our logger
+    if numeric_level > logging.DEBUG:
+        logging.getLogger("requests").setLevel(logging.WARNING)
+        logging.getLogger("urllib3").setLevel(logging.WARNING)
+    else:
+        logging.getLogger("requests").setLevel(logging.DEBUG)
+        logging.getLogger("urllib3").setLevel(logging.DEBUG)
+
+    return logger
+
+logger = setup_logging()
+
 # Global configuration store (populated by load_config)
 data: Dict[str, Any] = {}
 
 DEFAULT_BASE_URL = "http://localhost:44444/"
-
-
-def default_client_dir() -> Path:
-    # Use LAT_CL_HOME_DIR if set, otherwise default to ~/.Lattice/client
-    env = os.getenv("LAT_CL_HOME_DIR")
-    if env:
-        return Path(env)
-    return Path.home() / ".Lattice" / "client"
 
 
 def ensure_client_dirs(base: Path) -> None:
@@ -61,12 +100,14 @@ def load_config() -> None:
     config_path = client_dir / "config.toml"
     if not config_path.exists():
         data = {}
+        logger.debug("Config file %s not found; using empty configuration", config_path)
         return
     try:
         with config_path.open("r", encoding="utf-8") as f:
             data = toml.load(f)
+            logger.debug("Loaded configuration from %s", config_path)
     except Exception as e:
-        print(f"Failed to load config file {config_path}: {e}", file=sys.stderr)
+        logger.exception("Failed to load config file %s: %s", config_path, e)
         data = {}
 
 
@@ -88,11 +129,45 @@ def save_config(url: Optional[str], api_key: Optional[str]) -> None:
             toml.dump(cfg, f)
         # set file mode to 0o600
         config_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        logger.info("Configuration saved to %s", config_path)
     except Exception as e:
-        print(f"Failed to write config file {config_path}: {e}", file=sys.stderr)
+        logger.exception("Failed to write config file %s: %s", config_path, e)
         raise
     # refresh global config
     load_config()
+
+
+def confirm(prompt: str, default: bool = True) -> bool:
+    """
+    Ask user for a yes/no confirmation. Returns True for yes.
+    """
+    default_str = "Y/n" if default else "y/N"
+    try:
+        ans = input(f"{prompt} [{default_str}]: ").strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        logger.info("Operation cancelled by user.")
+        return False
+    if ans == "":
+        return default
+    return ans in ("y", "yes")
+
+
+def safe_input(prompt: str, default: Optional[str] = None, hide: bool = False) -> Optional[str]:
+    """
+    Read input from the user, returning default if blank. If hide=True uses getpass.
+    """
+    try:
+        if hide:
+            val = getpass.getpass(prompt)
+        else:
+            val = input(prompt)
+    except (KeyboardInterrupt, EOFError):
+        logger.info("Input interrupted by user.")
+        return None
+    val = (val or "").strip()
+    if not val and default is not None:
+        return default
+    return val or None
 
 
 def config(action: str) -> None:
@@ -107,21 +182,26 @@ def config(action: str) -> None:
     config_path = client_dir / "config.toml"
 
     if action in ("add", "edit"):
-        print("Generating/updating config file inside Lattice client folder.")
-        url = input(f"Enter Lattice Server URL (default: {DEFAULT_BASE_URL}): ") or DEFAULT_BASE_URL
-        api_key = getpass.getpass("Enter API Key (leave blank to omit): ") or None
+        logger.info("Generating/updating config file inside Lattice client folder.")
+        url = safe_input(f"Enter Lattice Server URL (default: {DEFAULT_BASE_URL}): ", default=DEFAULT_BASE_URL) or DEFAULT_BASE_URL
+        api_key = safe_input("Enter API Key (leave blank to omit): ", default=None, hide=True)
         save_config(url, api_key)
-        print(f"Config saved to {config_path}")
+        logger.info("Config saved to %s", config_path)
         return
 
     if action == "clear":
+        if not config_path.exists():
+            logger.info("Config file does not exist.")
+            load_config()
+            return
+        if not confirm(f"Are you sure you want to remove the config file at {config_path}?", default=False):
+            logger.info("Config removal cancelled.")
+            return
         try:
             config_path.unlink()
-            print("Config file removed successfully.")
-        except FileNotFoundError:
-            print("Config file does not exist.")
+            logger.info("Config file removed successfully.")
         except Exception as e:
-            print(f"Error removing config file: {e}", file=sys.stderr)
+            logger.exception("Error removing config file: %s", e)
             raise
         # reload to clear data
         load_config()
@@ -130,12 +210,13 @@ def config(action: str) -> None:
     if action in ("list", "load"):
         load_config()
         if data:
+            # keep printed JSON on stdout for ease of piping
             print(json.dumps(data, indent=2))
         else:
-            print("Config file does not exist or is empty.")
+            logger.info("Config file does not exist or is empty.")
         return
 
-    print(f"Unsupported config action: {action}", file=sys.stderr)
+    logger.error("Unsupported config action: %s", action)
 
 
 # Attempt to load config at import time so classes can pick up defaults
@@ -206,7 +287,7 @@ def validate_chat_response(resp_json: Any) -> Optional[ChatCompletionResponse]:
             # pydantic v1
             return ChatCompletionResponse.parse_obj(resp_json)
         except Exception as e:
-            print(f"Failed to validate chat response: {e}", file=sys.stderr)
+            logger.exception("Failed to validate chat response: %s", e)
             return None
 
 
@@ -218,7 +299,7 @@ def engine(args) -> None:
     """
     import multiprocessing as mp
 
-    print("Starting Lattice Engine...")
+    logger.info("Starting Lattice Engine...")
     # Set spawn method early if available
     try:
         mp.set_start_method("spawn", force=True)
@@ -231,17 +312,17 @@ def engine(args) -> None:
     try:
         from latticepy.engine.latticeai import main as engine_main  # type: ignore
     except Exception as e:
-        print(f"Failed to import local engine: {e}. You may need to run the engine executable.", file=sys.stderr)
+        logger.exception("Failed to import local engine: %s. You may need to run the engine executable.", e)
         return
 
     p = mp.Process(target=engine_main, args=(args,))
     p.daemon = False
     p.start()
-    print(f"Engine process started (pid={p.pid}).")
+    logger.info("Engine process started (pid=%s).", p.pid)
 
 
 def chat(llm: str, agent: Optional[str] = None) -> None:
-    print("Starting chat session. Type 'exit' to quit.")
+    logger.info("Starting chat session. Type 'exit' to quit.")
     base_url = data.get("url", DEFAULT_BASE_URL)
     api_key = data.get("api_key", None)
     session = make_session(api_key)
@@ -250,35 +331,43 @@ def chat(llm: str, agent: Optional[str] = None) -> None:
         try:
             user_input = input("You: ")
         except (KeyboardInterrupt, EOFError):
-            print("\nExiting chat session.")
+            logger.info("Exiting chat session.")
             break
 
-        if user_input.strip().lower() in ("exit", "quit"):
-            print("Exiting chat session.")
+        if user_input is None or user_input.strip().lower() in ("exit", "quit"):
+            logger.info("Exiting chat session.")
             break
 
         request = ChatRequest(agent=agent, model=llm, messages=[Message(role="user", content=user_input)])
         try:
             # pydantic v2 uses model_dump(), v1 uses dict(); using model_dump if available
             payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
+            logger.debug("Posting chat payload to %s: %s", endpoint, payload)
             resp = session.post(endpoint, json=payload, timeout=session.request_timeout)
         except Exception as e:
-            print(f"Network error posting chat request: {e}", file=sys.stderr)
+            logger.exception("Network error posting chat request: %s", e)
             continue
 
         try:
             resp.raise_for_status()
         except Exception:
-            print(f"Server returned error: {resp.status_code} - {resp.text}", file=sys.stderr)
+            logger.error("Server returned error: %s - %s", resp.status_code, resp.text)
             continue
 
-        resp_json = resp.json()
+        try:
+            resp_json = resp.json()
+        except Exception as e:
+            logger.exception("Failed to parse JSON response: %s", e)
+            logger.error("Unable to parse chat response.")
+            continue
+
         chat_response = validate_chat_response(resp_json)
         if not chat_response:
-            print("Unable to parse chat response.")
+            logger.error("Unable to validate chat response.")
             continue
 
         for choice in chat_response.choices:
+            # Use print here to keep instant readability for chat interface (stdout)
             print(f"Agent: {choice.message.content}")
 
 
@@ -296,7 +385,7 @@ class CliOptions:
             response.raise_for_status()
             print(response.json())
         except Exception as e:
-            print(f"Error fetching list: {e}", file=sys.stderr)
+            logger.exception("Error fetching list: %s", e)
 
     def add(self, args=None) -> None:
         try:
@@ -304,7 +393,7 @@ class CliOptions:
             response.raise_for_status()
             print(response.json())
         except Exception as e:
-            print(f"Error adding resource: {e}", file=sys.stderr)
+            logger.exception("Error adding resource: %s", e)
 
     def delete(self, args=None) -> None:
         try:
@@ -312,7 +401,7 @@ class CliOptions:
             response.raise_for_status()
             print(response.json())
         except Exception as e:
-            print(f"Error deleting resource: {e}", file=sys.stderr)
+            logger.exception("Error deleting resource: %s", e)
 
     def clear(self, args=None) -> None:
         # Default behavior: same as delete for the base endpoint
@@ -321,7 +410,7 @@ class CliOptions:
             response.raise_for_status()
             print(response.json())
         except Exception as e:
-            print(f"Error clearing resource: {e}", file=sys.stderr)
+            logger.exception("Error clearing resource: %s", e)
 
 
 class AgentsCliOptions(CliOptions):
@@ -329,16 +418,16 @@ class AgentsCliOptions(CliOptions):
         super().__init__("/api/lattice/agents")
 
     def add(self, args=None) -> None:
-        agent_id = input("Enter Agent ID: ").strip()
+        agent_id = safe_input("Enter Agent ID: ", default=None)
         if not agent_id:
-            print("Agent ID is required.")
+            logger.error("Agent ID is required.")
             return
-        prompt = input("Enter Prompt name (optional): ") or None
-        toolfile = input("Enter tool function file: ").strip()
+        prompt = safe_input("Enter Prompt name (optional): ", default=None)
+        toolfile = safe_input("Enter tool function file: ", default=None)
         if not toolfile:
-            print("Tool filename is required.")
+            logger.error("Tool filename is required.")
             return
-        print("By default tools are defined as 'rephrase', but you can choose 'pass', 'flow', or 'rag'. See wiki for details.")
+        logger.info("By default tools are defined as 'rephrase', but you can choose 'pass', 'flow', or 'rag'. See wiki for details.")
         tools_path = Path(default_client_dir()) / "tools"
         if not tools_path.exists():
             tools_path.mkdir(parents=True, exist_ok=True)
@@ -347,16 +436,16 @@ class AgentsCliOptions(CliOptions):
             with toolfile_path.open("r", encoding="utf-8") as f:
                 tooljson = json.load(f)
         except Exception as e:
-            print(f"Error loading tool function file: {e}", file=sys.stderr)
+            logger.exception("Error loading tool function file: %s", e)
             return
 
         # allow interactive decoration of tool details
         for tool in tooljson:
             fname = tool.get("function", {}).get("name", "<unknown>")
-            print(f"Tool found: {fname}")
-            tool_type = input("Mention tool type for the tool (rephrase/pass/flow/rag) [rephrase]: ") or "rephrase"
+            logger.info("Tool found: %s", fname)
+            tool_type = safe_input("Mention tool type for the tool (rephrase/pass/flow/rag) [rephrase]: ", default="rephrase")
             if tool_type == "flow":
-                toolflow = input("Enter tool follow-on name for flow action: ").strip()
+                toolflow = safe_input("Enter tool follow-on name for flow action: ", default="")
                 tool["details"] = {"action": "flow", "followon": toolflow}
             elif tool_type == "rag":
                 tool["details"] = {"action": "RAG"}
@@ -374,21 +463,22 @@ class AgentsCliOptions(CliOptions):
         try:
             response = self.session.post(self.endpoint, json=payload, timeout=self.session.request_timeout)
             response.raise_for_status()
-            print("Saving the agent configuration locally.")
+            logger.info("Saving the agent configuration locally.")
             agents_dir = Path(default_client_dir()) / "agents"
             agents_dir.mkdir(parents=True, exist_ok=True)
             with (agents_dir / f"{agent_id}_config.json").open("w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=4)
+            logger.info("Agent %s created and saved locally.", agent_id)
         except Exception as e:
-            print(f"Error creating agent: {e}", file=sys.stderr)
+            logger.exception("Error creating agent: %s", e)
 
     def edit(self, args=None) -> None:
-        agent_id = input("Enter Agent ID to edit: ").strip()
+        agent_id = safe_input("Enter Agent ID to edit: ", default=None)
         if not agent_id:
-            print("Agent ID is required.")
+            logger.error("Agent ID is required.")
             return
-        prompt = input("Enter new Prompt name (leave blank to keep current): ") or None
-        toolfile = input("Enter new tool function file (leave blank to keep current): ") or None
+        prompt = safe_input("Enter new Prompt name (leave blank to keep current): ", default=None)
+        toolfile = safe_input("Enter new tool function file (leave blank to keep current): ", default=None)
         payload: Dict[str, Any] = {}
         if prompt:
             payload["prompt"] = prompt
@@ -399,14 +489,14 @@ class AgentsCliOptions(CliOptions):
                 with toolfile_path.open("r", encoding="utf-8") as f:
                     tooljson = json.load(f)
             except Exception as e:
-                print(f"Error loading tool function file: {e}", file=sys.stderr)
+                logger.exception("Error loading tool function file: %s", e)
                 return
             for tool in tooljson:
                 fname = tool.get("function", {}).get("name", "<unknown>")
-                print(f"Tool found: {fname}")
-                tool_type = input("Mention tool type for the tool (rephrase/pass/flow/rag) [rephrase]: ") or "rephrase"
+                logger.info("Tool found: %s", fname)
+                tool_type = safe_input("Mention tool type for the tool (rephrase/pass/flow/rag) [rephrase]: ", default="rephrase")
                 if tool_type == "flow":
-                    toolflow = input("Enter tool follow-on name for flow action: ").strip()
+                    toolflow = safe_input("Enter tool follow-on name for flow action: ", default="")
                     tool["details"] = {"action": "flow", "followon": toolflow}
                 elif tool_type == "rag":
                     tool["details"] = {"action": "RAG"}
@@ -419,13 +509,14 @@ class AgentsCliOptions(CliOptions):
         try:
             response = self.session.put(urljoin(self.endpoint + "/", agent_id), json=payload, timeout=self.session.request_timeout)
             response.raise_for_status()
-            print("Updating the agent configuration locally.")
+            logger.info("Updating the agent configuration locally.")
             agents_dir = Path(default_client_dir()) / "agents"
             agents_dir.mkdir(parents=True, exist_ok=True)
             with (agents_dir / f"{agent_id}_config.json").open("w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=4)
+            logger.info("Agent %s updated and saved locally.", agent_id)
         except Exception as e:
-            print(f"Error updating agent: {e}", file=sys.stderr)
+            logger.exception("Error updating agent: %s", e)
 
 
 class ConnCliOptions(CliOptions):
@@ -453,16 +544,22 @@ class LatticeToolServer(CliOptions):
         super().__init__("/api/lattice/toolserver")
 
     def add(self, args=None) -> None:
-        name = input("Enter Tool Server name: ").strip()
-        url = input("Enter Tool Server URL: ").strip()
-        details = input("Enter additional details (optional): ") or {}
+        name = safe_input("Enter Tool Server name: ", default=None)
+        if not name:
+            logger.error("Tool Server name is required.")
+            return
+        url = safe_input("Enter Tool Server URL: ", default=None)
+        if not url:
+            logger.error("Tool Server URL is required.")
+            return
+        details = safe_input("Enter additional details (optional): ", default="") or {}
         payload = {"id": name, "url": url, "details": details}
         try:
             response = self.session.post(self.endpoint, json=payload, timeout=self.session.request_timeout)
             response.raise_for_status()
             print(response.json())
         except Exception as e:
-            print(f"Error adding tool server: {e}", file=sys.stderr)
+            logger.exception("Error adding tool server: %s", e)
 
 
 class ToolsData(CliOptions):
@@ -480,7 +577,7 @@ class ToolsData(CliOptions):
                     tools = data_json.get("Lattice Tools", {})
                     print(*tools.keys(), sep="\n")
                 except Exception as e:
-                    print(f"Error fetching all tools: {e}", file=sys.stderr)
+                    logger.exception("Error fetching all tools: %s", e)
                 return
             elif getattr(args, "alldetails", False):
                 try:
@@ -488,10 +585,10 @@ class ToolsData(CliOptions):
                     response.raise_for_status()
                     print(response.json())
                 except Exception as e:
-                    print(f"Error fetching all tool details: {e}", file=sys.stderr)
+                    logger.exception("Error fetching all tool details: %s", e)
                 return
             else:
-                print("Tool server name is required for fetching tools.")
+                logger.error("Tool server name is required for fetching tools.")
                 return
         else:
             try:
@@ -499,7 +596,7 @@ class ToolsData(CliOptions):
                 response.raise_for_status()
                 print(response.json())
             except Exception as e:
-                print(f"Error fetching tool {name}: {e}", file=sys.stderr)
+                logger.exception("Error fetching tool %s: %s", name, e)
 
     def generate_tool_function_format(self, tool_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -546,6 +643,7 @@ class ToolsData(CliOptions):
             name = arg.get("name")
             if not name:
                 # skip unnamed args
+                logger.debug("Skipping unnamed argument in toolschema: %s", arg)
                 continue
             raw_type = arg.get("type", "string")
             # Normalize type
@@ -594,11 +692,11 @@ class ToolsData(CliOptions):
         }
 
     def gen(self, args=None) -> None:
-        filename = input("Enter the tool file name to be saved (with .json extension): ").strip()
+        filename = safe_input("Enter the tool file name to be saved (with .json extension): ", default=None)
         if not filename:
-            print("Filename is required.")
+            logger.error("Filename is required.")
             return
-        tools = input("Enter tool names separated by commas: ").strip()
+        tools = safe_input("Enter tool names separated by commas: ", default="")
         tool_list = [t.strip() for t in tools.split(",")] if tools else []
         try:
             response = self.session.get(self.endpoint, timeout=self.session.request_timeout)
@@ -606,20 +704,20 @@ class ToolsData(CliOptions):
             data_json = response.json()
             data_tools = data_json.get("Lattice Tools", {})
         except Exception as e:
-            print(f"Error fetching tools from server: {e}", file=sys.stderr)
+            logger.exception("Error fetching tools from server: %s", e)
             return
 
         tool_json: List[Dict[str, Any]] = []
         for tool in tool_list:
             if tool not in data_tools:
-                print(f"Tool {tool} not found in the tool server.")
+                logger.warning("Tool %s not found in the tool server.", tool)
                 continue
             tool_data = data_tools[tool].get("data", {})
             tool_data["name"] = tool
             try:
                 tool_json.append(self.generate_tool_function_format(tool_data))
             except Exception as e:
-                print(f"Failed to generate format for tool {tool}: {e}", file=sys.stderr)
+                logger.exception("Failed to generate format for tool %s: %s", tool, e)
 
         tools_dir = Path(default_client_dir()) / "tools"
         tools_dir.mkdir(parents=True, exist_ok=True)
@@ -627,18 +725,18 @@ class ToolsData(CliOptions):
         try:
             with target.open("w", encoding="utf-8") as f:
                 json.dump(tool_json, f, indent=4)
-            print(f"Tool function format saved to {target}")
+            logger.info("Tool function format saved to %s", target)
         except Exception as e:
-            print(f"Failed to write tool file {target}: {e}", file=sys.stderr)
+            logger.exception("Failed to write tool file %s: %s", target, e)
 
     def add(self, args=None) -> None:
-        print("Tool addition not supported; tools are auto-loaded from the Tool server")
+        logger.info("Tool addition not supported; tools are auto-loaded from the Tool server")
 
     def delete(self, args=None) -> None:
-        print("Tool deletion not supported; tools are auto-loaded from the Tool server")
+        logger.info("Tool deletion not supported; tools are auto-loaded from the Tool server")
 
     def clear(self, args=None) -> None:
-        print("Model clearing not supported; they are auto-loaded from the connections")
+        logger.info("Model clearing not supported; they are auto-loaded from the connections")
 
 
 class ModelOptions(CliOptions):
@@ -646,50 +744,76 @@ class ModelOptions(CliOptions):
         super().__init__("/api/lattice/models")
 
     def add(self, args=None) -> None:
-        print("Model addition not supported; models are auto-loaded from the connections")
+        logger.info("Model addition not supported; models are auto-loaded from the connections")
 
     def delete(self, args=None) -> None:
-        print("Model deletion not supported; models are auto-loaded from the connections")
+        logger.info("Model deletion not supported; models are auto-loaded from the connections")
 
     def clear(self, args=None) -> None:
-        print("Model clearing not supported; models are auto-loaded from the connections")
+        logger.info("Model clearing not supported; models are auto-loaded from the connections")
 
 
 def main() -> None:
-    print("Lattice Client CLI Tool")
-    parser = argparse.ArgumentParser("lattice-client cli tool")
+    logger.info("Lattice Client CLI Tool")
+    parser = argparse.ArgumentParser(
+        "lattice-client",
+        description="Lattice CLI - manage agents, tools, connections, and perform chat interactions with the Lattice server.",
+    )
+    # Global options
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     subparsers = parser.add_subparsers(dest="isubcommand")
-    parser_o = subparsers.add_parser("config")
+
+    parser_o = subparsers.add_parser("config", help="Manage local client configuration (url, api_key)")
     parser_o.add_argument("subcommand", choices=["edit", "clear", "add", "list", "load"])
-    parser_h = subparsers.add_parser("chat")
+
+    parser_h = subparsers.add_parser("chat", help="Start an interactive chat session with an LLM")
     parser_h.add_argument("--agent", type=str, help="Agent name to use for chat", required=True)
-    parser_h.add_argument("--llm", type=str, help="llm model to be used for chat", required=True)
-    parser_a = subparsers.add_parser("agents")
+    parser_h.add_argument("--llm", type=str, help="LLM model to be used for chat", required=True)
+
+    parser_a = subparsers.add_parser("agents", help="Manage agents")
     parser_a.add_argument("subcommand", choices=["list", "clear", "delete", "add", "edit", "download"])
-    parser_c = subparsers.add_parser("connections")
+
+    parser_c = subparsers.add_parser("connections", help="Manage connections")
     parser_c.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-    parser_p = subparsers.add_parser("prompt")
+
+    parser_p = subparsers.add_parser("prompt", help="Manage prompts")
     parser_p.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-    parser_t = subparsers.add_parser("toolserver")
+
+    parser_t = subparsers.add_parser("toolserver", help="Manage tool servers")
     parser_t.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-    parser_l = subparsers.add_parser("tools")
+
+    parser_l = subparsers.add_parser("tools", help="Interact with tools and tool servers")
     parser_l.add_argument("subcommand", choices=["list", "fetch", "gen"])
-    parser_l.add_argument("--name", nargs=1)
+    parser_l.add_argument("--name", nargs=1, help="Tool server name or tool name depending on subcommand")
     parser_l.add_argument("--all", action="store_true", help="Fetch all tools from all tool servers")
     parser_l.add_argument("--alldetails", action="store_true", help="Fetch all tools and details from all tool servers")
-    parser_m = subparsers.add_parser("mcp")
+
+    parser_m = subparsers.add_parser("mcp", help="Manage MCP resources")
     parser_m.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-    parser_d = subparsers.add_parser("models")
+
+    parser_d = subparsers.add_parser("models", help="Manage models")
     parser_d.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-    parser_r = subparsers.add_parser("rag")
+
+    parser_r = subparsers.add_parser("rag", help="Manage RAG resources")
     parser_r.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-    parser_e = subparsers.add_parser("engine")
+
+    parser_e = subparsers.add_parser("engine", help="Run local engine")
     parser_e.add_argument("run", choices=["web", "daemon"])
     parser_e.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
     parser_e.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
     parser_e.add_argument("--socket", action="store_true", help="to enable socket communication")
     parser_e.add_argument("--config", type=str, help="Path to the configuration file", default=None)
+
     args = parser.parse_args()
+
+    # Reconfigure logger if --debug passed
+    if getattr(args, "debug", False):
+        logger.setLevel(logging.DEBUG)
+        for h in logger.handlers:
+            h.setLevel(logging.DEBUG)
+        logging.getLogger("requests").setLevel(logging.DEBUG)
+        logging.getLogger("urllib3").setLevel(logging.DEBUG)
+        logger.debug("Debug logging enabled via CLI flag")
 
     if not args.isubcommand:
         parser.print_help()
@@ -719,22 +843,26 @@ def main() -> None:
     }
 
     if args.isubcommand not in call:
-        print(f"Unknown command: {args.isubcommand}", file=sys.stderr)
+        logger.error("Unknown command: %s", args.isubcommand)
         return
 
     try:
         met = call[args.isubcommand]()
     except Exception as e:
-        print(f"Failed to initialize CLI handler for {args.isubcommand}: {e}", file=sys.stderr)
+        logger.exception("Failed to initialize CLI handler for %s: %s", args.isubcommand, e)
         return
 
     cmd = getattr(met, args.subcommand, None)
     if not cmd:
-        print(f"Command {args.subcommand} not supported for {args.isubcommand}", file=sys.stderr)
+        logger.error("Command %s not supported for %s", args.subcommand, args.isubcommand)
         return
 
-    cmd(args)
+    try:
+        cmd(args)
+    except Exception as e:
+        logger.exception("Unhandled exception while executing command: %s", e)
 
 
 if __name__ == "__main__":
+    init_client_home()
     main()
