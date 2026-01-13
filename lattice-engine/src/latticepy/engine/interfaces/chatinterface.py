@@ -1,5 +1,8 @@
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from latticepy.engine.interfaces.clientinterface import LLMmodels
 from latticepy.engine.interfaces.agentinterface import LatticeAgent
@@ -26,9 +29,9 @@ class Chatinterface:
     def chat(self):
         """
         Sends a message to the LLM and returns the response.
-        If the model supports tool calls, it will return the tool call information.
+        if the model supports tool calls, it will return the tool call information.
         """
-        print(f"Chatinterface: modelinfo={self.modelinfo}, message={self.message}, agent={self.agent}")
+        logger.info(f"Chatinterface: modelinfo={self.modelinfo}, message={self.message}, agent={self.agent}")
         if not self.modelinfo or not self.message:
             raise ValueError("Model and message must be provided")
         if self.agent:
@@ -47,25 +50,25 @@ class Chatinterface:
         # You would typically check if the model has tools and call them accordingly
         toolsob=ToolLoad(self.agent)
         agentdetails=LatticeAgent.get(self.agent)
-        print('fetching prompt')
+        logger.debug('fetching prompt')
         prompt= agentdetails['prompt'] or 'You are a helpful assistant.'
         tools= agentdetails['tools'] or None
         tools=json.loads(tools) if tools else None
-        print(f"Using prompt: {prompt}")
-        print(f"Using tools: {[tool['function']['name'] for tool in tools] if tools else 'No tools'}")
+        logger.debug(f"Using prompt: {prompt}")
+        logger.debug(f"Using tools: {[tool['function']['name'] for tool in tools] if tools else 'No tools'}")
         iresponse = self.llm.chat(self.modelinfo.model, prompt, self.message, tools=tools)
-        print(f"Response from LLM: {iresponse}")
+        logger.debug(f"Response from LLM: {iresponse}")
         def final_response(toolresponse):
             #creating various interfaces for final response
             for tool in toolresponse:
                 tresponse =callserver(tool['function']['name'], tool['function']['arguments'])
-                print(f'Tool response: {tresponse}')
+                logger.debug(f'Tool response: {tresponse}')
                 if tresponse.success:
                     tres=tresponse.data
                 else:
                     tres=f"Error calling tool {tool['function']['name']}: {tresponse.error}"
                 recall_opt=toolsob.getrecall(tool['function']['name'])
-                print(f"Recall option: {recall_opt}")
+                logger.debug(f"Recall option: {recall_opt}")
                 if recall_opt == 'flow':
                     response=self.llm.chat(self.modelinfo.model, prompt, self.message, tools=tools)
                     fresponse=final_response(toolresponse)

@@ -5,7 +5,9 @@ from typing import Dict, Any, Optional, Literal
 from latticepy.engine.interfaces.llminterface import llmClient
 from latticepy.engine.services.localdatabase import LocalDatabase
 
+import logging
 
+logger = logging.getLogger(__name__)
 
 # --- Initialize Local Database ---
 LocalDatabase.create_tables(
@@ -102,14 +104,14 @@ class Data:
         cls.refresh()
         if key in cls.data:
             return cls.data[key]
-        print(f"Data {key} not found.")
+        logger.warning(f"Data {key} not found.")
         return None
 
     @classmethod
     def add(cls, key, value):
         cls.refresh()
         if key in cls.data:
-            print(f"Data {key} already exists.")
+            logger.warning(f"Data {key} already exists.")
             raise ValueError(f"Data {key} already exists.")
         try:
             conn = LocalDatabase.connect()
@@ -122,25 +124,25 @@ class Data:
             conn.execute(sql, tuple(data_dict.values()))
             conn.connection.commit()
         except Exception as e:
-            print(f"Error adding data to database: {e}")
+            logger.error(f"Error adding data to database: {e}")
             raise  ValueError(f"Error adding data to database: {e}")
-        print(f"Data {key} added to database.")
+        logger.info(f"Data {key} added to database.")
         cls.refresh()
 
     @classmethod
     def delete(cls, key):
-        print(f"Deleting data with key: {key}")
+        logger.info(f"Deleting data with key: {key}")
         try:
             conn = LocalDatabase.connect()
             table = cls._get_tablename()
             sql = f"DELETE FROM {table} WHERE id = ?"
-            print(sql)
+            logger.debug(sql)
             conn.execute(sql, (key,))
             conn.connection.commit()
         except Exception as e:
-            print(f"Error deleting data from database: {e}")
+            logger.error(f"Error deleting data from database: {e}")
             return
-        print(f"Data {key} deleted from database.")
+        logger.info(f"Data {key} deleted from database.")
         cls.refresh()
 
     @classmethod
@@ -152,9 +154,9 @@ class Data:
             conn.execute(sql)
             conn.connection.commit()
         except Exception as e:
-            print(f"Error clearing data from database: {e}")
+            logger.error(f"Error clearing data from database: {e}")
             return
-        print("All data cleared from database.")
+        logger.info("All data cleared from database.")
         cls.refresh()
 
     #def update
@@ -185,11 +187,11 @@ class LLMmodels():
     def __init__(self) -> None:
         # For each connection refresh the list so that we use the latest connection info
         self.connections = LlmConnections.list()
-        print(self.connections)
+        logger.debug(self.connections)
         for connection in self.connections:
             connec = LlmConnections.get(connection)
             if not connec:
-                print(f"Connection {connection} not found.")
+                logger.warning(f"Connection {connection} not found.")
                 continue
             Client=llmClient(**connec.model_dump(exclude_unset=True))
             models = Client.models()
@@ -200,10 +202,10 @@ class LLMmodels():
 
     def listdown(self):
         if self.MODELS:
-            print(f"Available models:{self.MODELS.keys()}")
+            logger.debug(f"Available models:{self.MODELS.keys()}")
             return list(self.MODELS.keys())
         else:
-            print("No models available.")
+            logger.info("No models available.")
 
     def list(self) -> Dict:
         """
@@ -214,7 +216,7 @@ class LLMmodels():
     def get(self, key):
         if key in self.MODELS:
             return self.MODELS[key]
-        print(f"Model {key} not found.")
+        logger.warning(f"Model {key} not found.")
         return None
   
 class Workflows:

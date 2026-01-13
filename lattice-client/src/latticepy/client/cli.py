@@ -371,6 +371,16 @@ def chat(llm: str, agent: Optional[str] = None) -> None:
             print(f"Agent: {choice.message.content}")
 
 
+def launch_ui() -> None:
+    """
+    Launch the Streamlit UI for the Lattice client.
+    """
+    import streamlit.web.cli as stcli
+
+    logger.info("Launching Lattice UI...")
+    sys.argv = ["streamlit", "run", str(Path(__file__).parent / "ui.py")]
+    sys.exit(stcli.main())
+
 class CliOptions:
     def __init__(self, ext: str) -> None:
         self.url = data.get("url", DEFAULT_BASE_URL)
@@ -804,6 +814,9 @@ def main() -> None:
     parser_e.add_argument("--socket", action="store_true", help="to enable socket communication")
     parser_e.add_argument("--config", type=str, help="Path to the configuration file", default=None)
 
+    parser_u = subparsers.add_parser("launch", help="Run local engine")
+    parser_u.add_argument("run", choices=['ui'])
+
     args = parser.parse_args()
 
     # Reconfigure logger if --debug passed
@@ -830,6 +843,10 @@ def main() -> None:
     if args.isubcommand == "chat":
         chat(args.llm, args.agent)
         return
+    
+    if args.isubcommand == "launch":
+        if args.run == 'ui':
+            launch_ui()
 
     call = {
         "agents": AgentsCliOptions,

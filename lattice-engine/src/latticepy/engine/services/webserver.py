@@ -8,7 +8,10 @@ import uuid
 import time
 import json
 import asyncio
+import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from latticepy.engine.interfaces.chatinterface import Chatinterface
 from latticepy.engine.interfaces.clientinterface import VectorDBlist, Promptlist, LLMmodels, LlmConnections 
@@ -87,16 +90,16 @@ async def generate_ai_response(messages, model, tag):
 
     modelo=LLMmodels()
     models=(modelo.list()).keys()
-    print(models)
+    logger.debug(f"Available models: {models}")
     if model not in models:
         return f"Model {model} not found.", '', {}
     try:
-        print("calling chat interface")
+        logger.info("calling chat interface")
         reply = Chatinterface(last_message, model, tag)
         llmresponse, agent_response, agent_headers = reply.chat()
         return llmresponse, agent_response, agent_headers
     except Exception as e:
-        print(e)
+        logger.error(f"Error in generating AI response: {e}")
         return "Thank you for your message. Unable to reply to your message.", '', {}
 
 # Helper function to count tokens (simplified)
@@ -145,11 +148,11 @@ async def get_openapi():
 @app.post("/api/lattice/chat", response_model=Union[ChatCompletionResponse, None])
 async def chatwithagent(request: ChatRequest):
     completion_id = f"chatcmpl-{str(uuid.uuid4())}"
-    print("Received chat request:", request)
+    logger.info(f"Received chat request: {request}")
     ai_response, additonal_context, headers = await generate_ai_response(request.messages, request.model, request.agent)
     completion_tokens = count_tokens([Message(role="assistant", content=ai_response)])
     prompt_tokens = count_tokens(request.messages)
-    print(additonal_context)
+    logger.debug(f"Additional context: {additonal_context}")
     response_data = {
         "id": completion_id,
         "object": "chat.completion",
@@ -182,13 +185,13 @@ async def chatwithagent(request: ChatRequest):
 async def create_connection(request: ConnectionModel):
     try:
         CONNECTIONS=LlmConnections.list()
-        print("Creating connection:", request)
+        logger.info(f"Creating connection: {request}")
         if not request.id or not request.url:
             raise HTTPException(status_code=400, detail="ID and URL are required")
         if request.id in CONNECTIONS:
             raise HTTPException(status_code=400, detail="Connection already exists")
         LlmConnections.add(request.id, request)
-        print("Connection created:", request.id)    
+        logger.info(f"Connection created: {request.id}")    
         return JSONResponse({
             "status": "success",
             "connection_id": request.id,
@@ -324,7 +327,7 @@ async def create_lattice_agents(request: LatticeAgent):
     try:
         # Here you would implement the logic to create a model
         # For now, we just return a dummy response
-        print("Creating agent:", request)
+        logger.info(f"Creating agent: {request}")
         request.create()
         return JSONResponse({
             "status": "success",
@@ -344,7 +347,7 @@ async def get_lattice_agents():
             "Lattice Agents": agents
         })
     except Exception as e:
-        print(e)
+        logger.error(f"Error getting agents info: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.get("/api/lattice/agents/{agent_id}")
@@ -367,7 +370,7 @@ async def del_agents_info(agent_id: str):
         if agent_id not in agents:
             raise HTTPException(status_code=404, detail="Agents not found")
         agent_details = LatticeAgent.delete(agent_id)
-        print(agent_details)
+        logger.info(f"Deleted agent info: {agent_details}")
         if agent_details:
             return JSONResponse({
                 "status": f"successfully deleted {agent_id}"
@@ -383,7 +386,7 @@ async def update_agent_info(agent_id: str, request):
         agents=LatticeAgent.listdown()
         if agent_id not in agents:
             raise HTTPException(status_code=404, detail="Agents not found")
-        print("updating agent:", request)
+        logger.info(f"updating agent: {request}")
         agent_details = LatticeAgent.update(agent_id, request)
         return JSONResponse({
             "status": "success",
@@ -409,7 +412,7 @@ async def get_tool_server_details(server_id: str):
     try:
         s= servertooldata()
         servers=s.server_tools
-        #print(servers)
+        #logger.debug(servers)
         if server_id not in servers.keys():
             raise HTTPException(status_code=404, detail="Agents not found")
         server_details=servers[server_id]
@@ -424,12 +427,12 @@ async def get_tool_server():
     try:
         s= servertooldata()
         server_details=s.tooldata
-        print("got all tools from all servers")
+        logger.info("got all tools from all servers")
         return JSONResponse({
             "Lattice Tools": server_details
         })
     except Exception as e:
-        print(e)
+        logger.error(f"Error fetching tools: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/lattice/toolserver/{server_id}")
@@ -437,7 +440,7 @@ async def del_tool_server(server_id: str):
     try:
         s= servertooldata()
         servers=s.tooldata
-        print(servers)
+        logger.debug(servers)
         if server_id not in servers.keys():
             raise HTTPException(status_code=404, detail="Agents not found")
         if s.delete(server_id):
@@ -452,14 +455,13 @@ async def del_tool_server(server_id: str):
 @app.post("/api/lattice/toolserver")
 async def create_lattice_server(request: ToolServer):
     try:
-        print("server being added")
-        print(request)
+        logger.info(f"server being added: {request}")
         servertooldata.add(request)
         return JSONResponse({
             "status": "successfully added",
         })
     except Exception as e:
-        print(e)
+        logger.error(f"Error adding tool server: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

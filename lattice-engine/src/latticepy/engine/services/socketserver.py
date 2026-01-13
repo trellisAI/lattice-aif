@@ -2,6 +2,9 @@ import os
 import sys
 import json
 import socketserver
+import logging
+
+logger = logging.getLogger(__name__)
 
 from latticepy.engine.interfaces.clientinterface import VectorDBlist, Promptlist, LatticeTools, LLMmodels, LlmConnections
 from latticepy.engine.interfaces.agentinterface import LatticeAgent
@@ -36,11 +39,11 @@ def run_socket_server():
     if os.path.exists(SOCKET_PATH):
         os.remove(SOCKET_PATH)
     with socketserver.UnixStreamServer(SOCKET_PATH, LatticeAIRequestHandler) as server:
-        print(f"LatticeAI Unix socket server running at {SOCKET_PATH}")
+        logger.info(f"LatticeAI Unix socket server running at {SOCKET_PATH}")
         server.serve_forever()
 
 if __name__ == "__main__":
     if sys.platform != "linux":
-        print("Unix domain sockets are only supported on Linux.")
+        logger.error("Unix domain sockets are only supported on Linux.")
         sys.exit(1)
     run_socket_server()

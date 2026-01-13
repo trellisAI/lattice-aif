@@ -3,6 +3,9 @@ from pydantic import BaseModel
 import os
 import sys
 import sqlite3
+import logging
+
+logger = logging.getLogger(__name__)
 
 class LocalDBModel(BaseModel):
     name: str
@@ -23,16 +26,16 @@ class LocalDatabase:
                 try:
                     os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
                     sqlite3.connect(self.db_path).close()
-                    print(f"Database created at {self.db_path}")
+                    logger.info(f"Database created at {self.db_path}")
                 except OSError as e:
-                    print(f"Error creating database: {e}")
+                    logger.error(f"Error creating database: {e}")
                     sys.exit(1)
             else:
-                print(f"Database exists at {self.db_path}")
+                logger.info(f"Database exists at {self.db_path}")
             os.environ["LATTICE_DB_PATH"] = self.db_path
 
         else:
-            print(f"Unsupported database type: {db.db}")
+            logger.error(f"Unsupported database type: {db.db}")
             sys.exit(1)
         self.db_name = db.name
         self.db_url = db.url_path
