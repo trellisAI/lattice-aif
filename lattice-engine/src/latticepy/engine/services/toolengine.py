@@ -2,6 +2,9 @@ from pydantic import BaseModel, Field, model_validator
 from typing import List, Dict, Any, Optional, Literal, Tuple
 import json
 import jsonschema
+import logging
+
+logger = logging.getLogger(__name__)
 
 from latticepy.engine.interfaces.serverinterface import servertooldata
 from latticepy.engine.services.localdatabase import LocalDatabase
@@ -65,15 +68,15 @@ class ToolLoad:
 
     def __init__(self, agentname):
         self.agentname = agentname
-        print(f"Loading tools for agent: {agentname}")
+        logger.info(f"Loading tools for agent: {agentname}")
         conn=LocalDatabase.connect()
         cursor=conn.execute("SELECT details FROM latticeagents WHERE id=?", (f'{agentname}',))
         row=cursor.fetchone()
-        print(f"Fetched tool details from database: {row['details']}")
+        logger.debug(f"Fetched tool details from database: {row['details']}")
         if not row:
             raise ValueError(f"Agent {agentname} not found in database.")
         self.tooldetails=json.loads(row['details'])
-        print(f"Tool details loaded: {self.tooldetails}")
+        logger.debug(f"Tool details loaded: {self.tooldetails}")
 
     @staticmethod
     def get_server(toolname) -> str | None :
@@ -87,9 +90,9 @@ class ToolLoad:
         """
         Determines the recall option for a given tool.
         """
-        print(f"Fetching recall option for tool: {tool} and {self.tooldetails}")
+        logger.info(f"Fetching recall option for tool: {tool} and {self.tooldetails}")
         details= self.tooldetails.get(tool, {})
-        print(f"Tool details: {details}")
+        logger.debug(f"Tool details: {details}")
         return details.get('action', 'rephrase')
     
     def checktool(self, toolname) -> bool:

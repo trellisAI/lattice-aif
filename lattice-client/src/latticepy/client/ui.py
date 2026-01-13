@@ -179,7 +179,7 @@ def save_config(url: str, api_key: Optional[str] = None) -> bool:
         st.error(f"Failed to save config: {e}")
         return False
 
-def make_session(api_key: Optional[str] = None, timeout: int = 10) -> requests.Session:
+def make_session(api_key: Optional[str] = None, timeout: int = 40) -> requests.Session:
     """Create a requests session with retry logic."""
     s = requests.Session()
     retry_strategy = Retry(
@@ -468,13 +468,13 @@ else:
         st.stop()
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
-        "💬 Chat", "🔌CONNECTIONS", "📊 Models", "🤖 Agents", "📝 Prompts", "🛠️ Tool Servers", 
+        "💬 PlayGround", "🔌CONNECTIONS", "📊 Models", "🤖 Agents", "📝 Prompts", "🛠️ Tool Servers", 
         "🔧 Tools", "🗄️ RAG", "🔗 MCP"
     ])
     
     # ==================== CHAT TAB ====================
     with tab1:
-        st.markdown("### 💬 Interactive Chat")
+        st.markdown("### 💬 Interactive PlayGround")
         
         # Fetch available agents and models
         available_agents = fetch_agents()
@@ -535,6 +535,7 @@ else:
                 with st.spinner("🤔 Thinking..."):
                     session = get_session()
                     endpoint = urljoin(config.get('url', DEFAULT_BASE_URL).rstrip("/") + "/", "api/lattice/chat")
+                    #add message history to payload
                     payload = {
                         "agent": agent,
                         "model": llm,
@@ -605,6 +606,8 @@ else:
             models = response.json()
             
             if models:
+                #add graphical model usage and model details stats if available
+                #add model as Graphical images
                 st.json(models)
             else:
                 st.info("📭 No models found")

@@ -4,6 +4,8 @@ import sys
 import shutil
 import platform
 import toml
+import logging
+from logging.handlers import TimedRotatingFileHandler
 from pydantic import BaseModel, ValidationError
 from typing import Optional
 
@@ -53,13 +55,13 @@ class Config:
             try:
                 config = ConfigModel(**toml.load(config_file))
             except toml.TomlDecodeError as e:
-                print(f"Error decoding TOML file: {e}")
+                logging.error(f"Error decoding TOML file: {e}")
                 sys.exit(1)
             except ValidationError as e:
-                print(f"Error validating configuration: {e}")
+                logging.error(f"Error validating configuration: {e}")
                 sys.exit(1)
             except Exception as e:
-                print(f"Unexpected error: {e}")
+                logging.error(f"Unexpected error: {e}")
                 sys.exit(1)
             return config
             
@@ -78,13 +80,40 @@ class Client:
     def stop(self):
         pass
 
+
 def main(args):
+    # Configure logging
+    log_dir = os.path.join(home_dir, lattice_folder, 'engine', 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, 'lattice.log')
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    
+    # Remove existing handlers if any to avoid duplication
+    if root_logger.hasHandlers():
+        root_logger.handlers.clear()
+
+    # File Handler - All levels with daily rotation
+    file_handler = TimedRotatingFileHandler(log_file, when='midnight', interval=1, backupCount=7)
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    root_logger.addHandler(file_handler)
+
+    # Console Handler - Error and Warnings only
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.WARNING)
+    console_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    root_logger.addHandler(console_handler)
+
+    logger = logging.getLogger(__name__)
+
     runtime_mode=args.run
     if args.config:
         if os.path.exists(args.config):
             shutil.copy(args.config, os.path.join(lattice_path, "config.toml"))
         else:
-            print("Config file not found")
+            logger.error("Config file not found")
             sys.exit(1)
     config_path = os.path.join(lattice_path, "config.toml")
     conf=Config()
@@ -94,6 +123,7 @@ def main(args):
         config=ConfigModel(mode=runtime_mode, address=args.address, port=args.port, config_path=config_path, DATABASE=dbdata)
         conf.update(config)
     config=conf.load(config_path)
+    logger.info(f"Starting Lattice Client in {runtime_mode} mode")
     Client.run(config)
 
 if __name__ == "__main__":

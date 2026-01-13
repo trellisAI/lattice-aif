@@ -4,6 +4,9 @@ import json
 
 from latticepy.engine.services.localdatabase import LocalDatabase
 from latticepy.engine.interfaces.clientinterface import Promptlist
+import logging
+
+logger = logging.getLogger(__name__)
 #from latticepy.engine.services.toolengine import ToolData
 
 LocalDatabase.create_tables(
@@ -33,8 +36,8 @@ class LatticeAgent(BaseModel):
         prompt_text=Promptlist.get(self.prompt).prompt if self.prompt in Promptlist.list()  else self.prompt
         name = f"AGENT_{self.id}"
         try:
-            print(name, prompt_text, self.tools)
-            print("adding to agents to database")
+            logger.debug(f"{name}, {prompt_text}, {self.tools}")
+            logger.info("adding to agents to database")
             tooldetails={}
             #tool_text=json.dumps(toollist)
             for tool in self.tools:
@@ -49,7 +52,7 @@ class LatticeAgent(BaseModel):
             )
             conn.connection.commit()
         except Exception as e:
-            print(f"Error creating model: {e}")
+            logger.error(f"Error creating model: {e}")
             raise ValueError("Error creating model: {e}")
         
     @classmethod
@@ -58,11 +61,11 @@ class LatticeAgent(BaseModel):
         List all custom models.
         """
         rows = LocalDatabase.connect().execute("SELECT * FROM latticeagents").fetchall()
-        print(rows)
+        logger.debug(rows)
         if rows:
             return {record["id"]: {**record} for record in rows}
         else:
-            print("No custom models available.")
+            logger.info("No custom models available.")
             return {}
         
     @classmethod
@@ -71,11 +74,11 @@ class LatticeAgent(BaseModel):
         List all custom models.
         """
         rows = LocalDatabase.connect().execute("SELECT * FROM latticeagents").fetchall()
-        print(rows)
+        logger.debug(rows)
         if rows:
             return [record["id"] for record in rows]
         else:
-            print("No custom models available.")
+            logger.info("No custom models available.")
             return []
 
     @classmethod
@@ -87,7 +90,7 @@ class LatticeAgent(BaseModel):
         if row:
             return {**row}
         else:
-            print(f"Model {model_id} not found.")
+            logger.warning(f"Model {model_id} not found.")
             return {}
         
     @classmethod
@@ -99,10 +102,10 @@ class LatticeAgent(BaseModel):
             conn = LocalDatabase.connect()
             conn.execute("DELETE FROM latticeagents WHERE id = ?", (model_id,))
             conn.connection.commit()
-            print(f"Model {model_id} deleted successfully.")
+            logger.info(f"Model {model_id} deleted successfully.")
             return True
         except Exception as e:
-            print(f"Error deleting model {model_id}: {e}")
+            logger.error(f"Error deleting model {model_id}: {e}")
             return False
         
     @classmethod
@@ -114,10 +117,11 @@ class LatticeAgent(BaseModel):
             conn = LocalDatabase.connect()
             conn.execute("DELETE FROM latticeagents")
             conn.connection.commit()
-            print("All custom models cleared successfully.")
+            conn.connection.commit()
+            logger.info("All custom models cleared successfully.")
             return True
         except Exception as e:
-            print(f"Error clearing custom models: {e}")
+            logger.error(f"Error clearing custom models: {e}")
             return False
         
     @staticmethod
@@ -137,7 +141,7 @@ class LatticeAgent(BaseModel):
                     (tool_text, agent_id)
                 )
             conn.connection.commit()
-            print(f"Agent {agent_id} updated successfully.")
+            logger.info(f"Agent {agent_id} updated successfully.")
         except Exception as e:
-            print(f"Error updating agent {agent_id}: {e}")
+            logger.error(f"Error updating agent {agent_id}: {e}")
             raise ValueError("Error updating agent: {e}")
