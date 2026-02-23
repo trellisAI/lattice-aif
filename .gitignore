@@ -18,3 +18,9 @@ Thumbs.db          # Windows specific
 __pycache__
 .venv
 build
+
+#node specific
+node_modules
+.local_node
+
+lattice-client/lattice-ui

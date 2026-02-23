@@ -64,7 +64,7 @@ Refer to the configuration documentation in the `docs/configuration.md` file for
 
 Our comprehensive documentation covers everything from installation and configuration to advanced agent development and deployment strategies.
 
-**[Explore the Docs ↗](https://trellisai.github.io/lattice-aif/details.md)**
+**[Explore the Docs ↗](details.md)**
 
 ## 🌐 Community & Support
 

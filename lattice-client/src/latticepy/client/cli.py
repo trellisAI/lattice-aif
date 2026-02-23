@@ -17,7 +17,7 @@ import logging
 import logging.handlers
 import requests
 import toml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from urllib.parse import urljoin
 from requests.adapters import HTTPAdapter
@@ -422,6 +422,10 @@ class CliOptions:
         except Exception as e:
             logger.exception("Error clearing resource: %s", e)
 
+class LatticeAgent(BaseModel):
+    id: str
+    prompt: Optional[str]  = None
+    tools:  List[Dict[str, Any]] = Field(..., description="List of tool function definitions.")
 
 class AgentsCliOptions(CliOptions):
     def __init__(self):
@@ -515,9 +519,10 @@ class AgentsCliOptions(CliOptions):
                 else:
                     tool["details"] = {"action": "rephrase"}
             payload["tools"] = tooljson
-
         try:
-            response = self.session.put(urljoin(self.endpoint + "/", agent_id), json=payload, timeout=self.session.request_timeout)
+
+            payLoad=LatticeAgent(id=agent_id, prompt=payload.get("prompt"), tools=payload.get("tools")).model_dump() if hasattr(LatticeAgent, "model_dump") else LatticeAgent(id=agent_id, prompt=payload.get("prompt"), tools=payload.get("tools")).dict()
+            response = self.session.put(urljoin(self.endpoint + "/", agent_id), json=payLoad, timeout=self.session.request_timeout)
             response.raise_for_status()
             logger.info("Updating the agent configuration locally.")
             agents_dir = Path(default_client_dir()) / "agents"

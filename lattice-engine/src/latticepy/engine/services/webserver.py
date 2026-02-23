@@ -381,13 +381,13 @@ async def del_agents_info(agent_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/lattice/agents/{agent_id}")
-async def update_agent_info(agent_id: str, request):
+async def update_agent_info(agent_id: str, request: LatticeAgent):
     try:
         agents=LatticeAgent.listdown()
         if agent_id not in agents:
             raise HTTPException(status_code=404, detail="Agents not found")
         logger.info(f"updating agent: {request}")
-        agent_details = LatticeAgent.update(agent_id, request)
+        agent_details = LatticeAgent.update(agent_id, request.model_dump())
         return JSONResponse({
             "status": "success",
             "agent": f"Agent {agent_id} updated"

@@ -15,6 +15,8 @@ import toml
 import stat
 import time
 from datetime import datetime
+from streamlit_react_flow import react_flow
+import os
 
 # Page configuration
 st.set_page_config(
@@ -179,7 +181,7 @@ def save_config(url: str, api_key: Optional[str] = None) -> bool:
         st.error(f"Failed to save config: {e}")
         return False
 
-def make_session(api_key: Optional[str] = None, timeout: int = 40) -> requests.Session:
+def make_session(api_key: Optional[str] = None, timeout: int = 80) -> requests.Session:
     """Create a requests session with retry logic."""
     s = requests.Session()
     retry_strategy = Retry(
@@ -212,7 +214,7 @@ def fetch_agents() -> List[str]:
         response = session.get(endpoint, timeout=session.request_timeout)
         response.raise_for_status()
         data = response.json()
-        print(data)
+        #print(data)
         # Extract agent IDs - adjust based on actual API response structure
         return data.get('Lattice Agents', [])
     except Exception:
@@ -227,11 +229,66 @@ def fetch_models() -> List[str]:
         response = session.get(endpoint, timeout=session.request_timeout)
         response.raise_for_status()
         data = response.json()
-        print(data)
+        #print(data)
         # Extract model names - adjust based on actual API response structure
         return data.get('models', [])
     except Exception:
         return []
+
+def get_flow_state_path() -> Path:
+    """Get the path to the flow state file."""
+    if not os.path.exists(get_client_dir() / "flows"):
+        os.makedirs(get_client_dir() / "flows")
+    return get_client_dir() / "flows"
+
+def save_flow_state(name: str, nodes: List[Dict], edges: List[Dict]) -> bool:
+    """Save flow state to file."""
+    try:
+        path = get_flow_state_path() / f"{name}.json"
+        state = {
+            "nodes": [
+                {
+                    "id": n.id,
+                    "type": n.type,
+                    "data": n.data,
+                    "pos": list(n.position.values()),
+                    "style": n.style,
+                    "source_position": n.source_position,
+                    "target_position": n.target_position,
+                    "draggable": n.draggable,
+                    "selectable": n.selectable,
+                    "connectable": n.connectable,
+                    "resizing": n.resizing,
+                    "z_index": n.z_index,
+                } for n in nodes
+            ],
+            "edges": [
+                {
+                    "id": e.id,
+                    "source": e.source,
+                    "target": e.target,
+                    "animated": e.animated,
+                    "marker_end": e.marker_end,
+                } for e in edges
+            ]
+        }
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(state, f, indent=4)
+        return True
+    except Exception as e:
+        st.error(f"Failed to save flow state: {e}")
+        return False
+
+def load_flow_state() -> Optional[Dict]:
+    """Load flow state from file."""
+    try:
+        path = get_flow_state_path() / "default_layout.json"
+        if path.exists():
+            with path.open("r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception as e:
+        st.error(f"Failed to load flow state: {e}")
+    return None
 
 # Load config
 config = load_config()
@@ -467,9 +524,9 @@ else:
         st.warning("⚠️ Please configure your connection in the sidebar first")
         st.stop()
     
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
         "💬 PlayGround", "🔌CONNECTIONS", "📊 Models", "🤖 Agents", "📝 Prompts", "🛠️ Tool Servers", 
-        "🔧 Tools", "🗄️ RAG", "🔗 MCP"
+        "🔧 Tools", "🗄️ RAG", "🔗 MCP", "🌊 Flow"
     ])
     
     # ==================== CHAT TAB ====================
@@ -766,6 +823,10 @@ else:
                         st.error(f"❌ Error: {str(e)}")
     
     # ==================== TOOLS TAB ====================
+    import streamlit as st
+    from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
+    from streamlit_flow.state import StreamlitFlowState
+    
     with tab7:
         st.markdown("### 🔧 Tools Management")
         
@@ -833,3 +894,64 @@ else:
                 st.info("📭 No MCP resources found")
         except Exception as e:
             st.error(f"❌ Error: {str(e)}")
+
+    # ==================== FLOW TAB ====================
+    import streamlit as st
+    from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
+    from streamlit_flow.state import StreamlitFlowState
+    from streamlit_flow.layouts import TreeLayout
+    from streamlit_flow import streamlit_flow
+    
+    with tab10:
+
+        if 'canvas_state' not in st.session_state:
+            st.session_state.canvas_state = StreamlitFlowState([], [])
+
+        st.session_state.canvas_state = streamlit_flow('fully_interactive_flow', 
+                    st.session_state.canvas_state,
+                    fit_view=True,
+                    show_controls=True,
+                    allow_new_edges=True,
+                    animate_new_edges=True,
+                    layout=TreeLayout("right"), 
+                    enable_pane_menu=True,
+                    enable_edge_menu=True,
+                    enable_node_menu=True,
+                    )
+        nodes=st.session_state.canvas_state.nodes
+        edges=st.session_state.canvas_state.edges
+        st.write(nodes)
+        st.write(edges)
+        st.write(f"Clicked on: {st.session_state.canvas_state.selected_id }")
+        col1, col2 = st.columns([1, 6])
+        with col1:
+            if st.button("💾 Save Layout", use_container_width=True):
+                if 'canvas_state' in st.session_state:
+                    name = st.text_input("Layout Name", value="default_layout")
+                    if not name:
+                        st.warning("Please provide a name")
+                        st.stop()
+                    if save_flow_state(name, st.session_state.canvas_state.nodes, st.session_state.canvas_state.edges):
+                        st.success("Saved!")
+                        time.sleep(1)
+                        st.rerun()
+            
+            if st.button("📂 Load Layout", use_container_width=True):
+                saved_state = load_flow_state()
+                if saved_state:
+                    nodes = [StreamlitFlowNode(**n) for n in saved_state.get("nodes", [])]
+                    edges = [StreamlitFlowEdge(**e) for e in saved_state.get("edges", [])]
+                    st.session_state.canvas_state = StreamlitFlowState(nodes, edges)
+                    st.success("Loaded!")
+                    st.session_state.canvas_state = streamlit_flow('static_flow_state', st.session_state.canvas_state,
+                    fit_view=True,
+                    show_controls=True,
+                    allow_new_edges=True,
+                    animate_new_edges=True,
+                    layout=TreeLayout("right"), 
+                    enable_pane_menu=True,
+                    enable_edge_menu=True,
+                    enable_node_menu=True,
+                    )
+                    time.sleep(0.5)
+                    st.rerun()
