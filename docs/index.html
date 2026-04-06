@@ -98,31 +98,6 @@
         <!-- Main Scrollable Area -->
         <main class="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16 bg-white">
             <div class="max-w-4xl mx-auto">
-                <div id="loading" class="hidden">
-                    <div class="animate-pulse flex flex-col space-y-4">
-                        <div class="h-8 bg-slate-200 rounded w-1/3"></div>
-                        <div class="h-4 bg-slate-200 rounded w-full"></div>
-                        <div class="h-4 bg-slate-200 rounded w-5/6"></div>
-                        <div class="h-4 bg-slate-200 rounded w-full"></div>
-                        <div class="h-32 bg-slate-200 rounded w-full mt-4"></div>
-                    </div>
-                </div>
-                <div id="error-message" class="hidden rounded-md bg-red-50 p-4 mb-6 border border-red-200">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">Failed to load documentation</h3>
-                            <div class="mt-2 text-sm text-red-700">
-                                <p id="error-text">Please ensure you are serving this file via a local web server (e.g. `python -m http.server`) rather than opening the file directly.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Content injected here -->
                 <article id="markdown-content" class="prose prose-slate max-w-none prose-headings:tracking-tight prose-a:text-blue-600 prose-code:text-blue-800 prose-code:bg-blue-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-slate-900 prose-pre:p-0">
                 </article>
@@ -153,6 +128,9 @@
     </div>
 
     <script>
+        // Embedded documentation data
+        const docData = {"overview": "<p align=\"center\">\n  <img src=\"docs/logo.svg\" alt=\"Lattice AI Logo\" width=\"250\"/>\n</p>\n\nWelcome to Lattice AIF, an AI framework for building intelligent applications.\n\n## Lattice-AIF: New AI framework to create Agents\n\nLattice-AIF is an agentic framework and platform designed to build, deploy, and manage intelligent AI agents. LatticeAI Engine provides a unified abstraction layer over diverse Large Language Models (LLMs) and external tools, empowering you to create robust, actionable AI solutions with unprecedented flexibility. The client-server architecture is inspired from Docker client and Docker engine, helps to scale and mange the Agents.\n\n## HLD architecture diagram\n<img src=\"docs/latticeaif.drawio.svg\" alt=\"Lattice AI Arch\" width=\"100%\"/>\n\n## \u2728 Why Lattice-AIF?\n\nIn a world of fragmented AI capabilities, LatticeAI brings order and efficiency:\n\n* **LLM Agnostic:** Seamlessly integrate and switch between any LLM \u2013 from cloud-based powerhouses like Google Gemini and OpenAI to local, privacy-focused models like Ollama.\n* **Robust Tool-Calling:** Extend LLM capabilities beyond text generation. Connect your agents to any API, database, or internal system to perform real-world actions.\n* **Agent Orchestration:** Build complex, multi-step, multi-LLM agent workflows with ease, and manage their entire lifecycle.\n* **Lattice Engine:** Inspired by Docker Engine, the arch is designed to benefit from a continuously running, daemonized \"Lattice Engine\" that provides production-grade reliability, scalability, and resource management for your agents.\n* **Developer-Friendly:** Interact via a powerful Command Line Interface (CLI) for advanced users, and an intuitive platform for broader adoption (coming soon!).\n\n\n## \ud83d\udce6 Package Structure\n\nLattice-AIF is organized into three core packages to ensure modularity and scalability:\n\n- [**lattice-engine**](file:///home/pharsha/lattice-aif/lattice-engine/README.md): The core daemon and orchestration layer.\n- [**lattice-client**](file:///home/pharsha/lattice-aif/lattice-client/README.md): The CLI and UI management layer for interacting with the engine.\n- [**lattice-server**](file:///home/pharsha/lattice-aif/lattice-server/README.md): A lightweight utility for registering and exposing tools for agents.\n\n## \ud83d\ude80 Getting Started\n\nTo get started with Lattice AIF, you should first clone the repository and then proceed to the documentation for the specific component you wish to set up.\n\n### 1. Clone the repository\n\n```bash\ngit clone https://github.com/trellisAI/lattice-aif.git\ncd lattice-aif\n```\n\n### 2. Component Setup\n\nDepending on your role (developer vs. user), you may want to start with different components:\n\n- **For Core Functionality**: Start with the [**Lattice Engine**](file:///home/pharsha/lattice-aif/lattice-engine/README.md). This is the heart of the framework and must be running for agents to function.\n- **For Interaction & Management**: Refer to the [**Lattice Client**](file:///home/pharsha/lattice-aif/lattice-client/README.md) for details on using the CLI and UI to manage agents and sessions.\n- **For Tool Development**: If you are building external tools for agents, see the [**Lattice Server**](file:///home/pharsha/lattice-aif/lattice-server/README.md) documentation on how to register and expose them.\n\n### 3. Comprehensive Documentation\n\nFor more detailed guides on architecture, configuration, and advanced usage, please refer to the files in the `docs/` directory or visit our online documentation.\n\n---\n\n## \ud83d\udcd6 Documentation\n\nOur comprehensive documentation covers everything from installation and configuration to advanced agent development and deployment strategies.\n\n**[Explore the Docs \u2197](https://trellisai.github.io/lattice-aif/details.md)**\n\n## \ud83c\udf10 Community & Support\n\nJoin our community to connect with other developers, get support, and contribute to LatticeAI's growth:\n\n* **GitHub Issues:** Report bugs or suggest features.\n* **Discussions (Coming Soon):** Ask questions and engage with the community.\n* **Discord/Slack (Future):** Real-time chat.\n\n## \ud83e\udd1d Contributing\n\nWe welcome contributions from the community! Whether it's code, documentation, or ideas, your input is valuable. Please see our [CONTRIBUTING.md](file:///home/pharsha/lattice-aif/docs/CONTRIBUTING.md) for guidelines.\n\n## \ud83d\udcc4 License\n\nLattice-AIF is released under the [MIT License](LICENSE).", "lattice-engine": "# Lattice Engine\n\n`lattice-engine` is the core orchestration layer of the Lattice AI framework. It manages the lifecycle of AI agents, coordinates tool execution, handles long-term memory via RAG, and provides a unified interface for multiple LLM providers.\n\n## Developer Architecture\n\nFrom a developer's perspective, the engine is structured as a collection of modular services coordinated by a central bootstrap process.\n\n### 1. Bootstrapping & Configuration (`latticeai.py`)\nThe engine entry point initializes the local workspace (`~/.Lattice/server`) and loads configuration from `config.toml` using Pydantic for validation. It manages the lifecycle of sub-processes, primarily spawning the web server and database services.\n\n### 2. Service Layer (`services/`)\nThe service layer implements the core logic of the framework:\n- **`webserver.py`**: A FastAPI-based REST API that serves as the gateway for the `lattice-client`. It handles model registration, agent deployment, and chat session management.\n- **`flowengine.py`**: Manages complex multi-step execution flows. It tracks state across agent interactions and ensures that tool outputs are correctly routed to the next step.\n- **`toolengine.py`**: The execution runtime for Lattice Tools. It handles parameter mapping, execution of local tool functions, and communication with remote tool servers.\n- **`localdatabase.py`**: An SQLite-based persistence layer that stores agent definitions, prompt templates, and connection metadata.\n\n### 3. Interface Layer (`interfaces/`)\nThe engine uses an interface-driven design to ensure provider neutrality:\n- **`LLMInterface`**: Abstract base class for LLM providers (OpenAI, Anthropic, local models via Ollama/vLLM).\n- **`AgentInterface`**: Defines the lifecycle and execution contract for AI agents.\n- **`ServerInterface`**: Defines how the engine communicates with external clients and tool registries.\n\n### 4. Utilities & Extensions (`utils/`)\n- **`RAG.py`**: Provides Retrieval-Augmented Generation capabilities. It integrates with vector databases to provide agents with contextual knowledge from local or remote documents.\n- **`mcpclients.py`**: Implementation of the Model Context Protocol (MCP) client, allowing Lattice agents to seamlessly use any MCP-compliant tool server.\n\n## Key Developer Workflows\n\n### Registering a New LLM Provider\nTo add a new provider, implement the `LLMInterface` in `src/latticepy/engine/interfaces/llminterface.py` and register it in the connection management service.\n\n### Customizing Agent Flows\nDevelopers can modify `flowengine.py` to change how agents interact with one another or how they handle error recovery during complex task execution.\n\n### Extending the API\nAll external interactions go through `webserver.py`. Adding new management capabilities involves creating new FastAPI routes and corresponding service methods.\n\n## Data Persistence\nThe engine uses the following directory structure for persistent data:\n- `~/.Lattice/server/config.toml`: Engine configuration.\n- `~/.Lattice/server/localdb`: SQLite database file.\n- `~/.Lattice/engine/logs/`: Rotating log files for debugging and monitoring.\n\n## Installation for Development\n\n```bash\n# Clone the repository and install in editable mode\npip install -e ./lattice-engine\n\n# The engine depends on several core AI libraries\npip install -r ./lattice-engine/requirements.txt\n```\n\n## Running the Engine\n\nThe engine can be started directly via the `lattice` CLI (from `lattice-client`) or as a standalone module:\n\n```bash\npython -m latticepy.engine.latticeai web --port 44444\n```\n\n## License\nMIT\n", "lattice-client": "# Lattice Client\n\n`lattice-client` is the primary command-line interface (CLI) for the Lattice AI framework. it allows you to manage agents, tools, connections, and perform interactive chat sessions with a Lattice server.\n\n## Installation\n\n```bash\npip install lattice-client\n```\n\n*(Note: If installing from source within the LatticePy workspace, use `pip install -e ./lattice-client`)*\n\n## Getting Started\n\nThe first thing you should do is configure the client to point to your Lattice Server:\n\n```bash\nlattice config add\n```\n\nThis will prompt you for the Server URL (default: `http://localhost:44444/`) and an optional API Key.\n\n## CLI Commands\n\nThe `lattice` command (and its alias `latticepy-client`) provides several subcommands for managing different aspects of the framework.\n\n### `config`\nManage local client configuration.\n- `add`: Interactive prompt to add a new configuration.\n- `edit`: Interactive prompt to update the existing configuration.\n- `list` / `load`: Display the current configuration in JSON format.\n- `clear`: Remove the local configuration file.\n\n### `chat`\nStart an interactive, persistent chat session with an LLM through a specific agent.\n- **Required Arguments**:\n  - `--agent <agent_name>`: The name of the registered agent to use.\n  - `--llm <model_name>`: The model identifier (e.g., `gpt-4`, `claude-3-opus`).\n- **Usage**:\n  ```bash\n  lattice chat --agent my-helper --llm gpt-4\n  ```\n\n### `agents`\nManage AI agents on the server and locally.\n- `list`: List all agents registered on the server.\n- `add`: Create a new agent interactively (prompts for ID, prompt, and tool configuration).\n- `edit`: Update an existing agent's configuration.\n- `delete`: Remove an agent from the server.\n- `clear`: Clear the local agent registry.\n- `download`: Download agent configurations from the server to the local workspace.\n\n### `tools`\nInteract with tools and tool servers.\n- `list`: List all tools available across all connected tool servers.\n- `fetch`: Get details for a specific tool.\n  - Usage: `lattice tools fetch --name <tool_name>`\n  - `--all`: Fetch all tools.\n  - `--alldetails`: Fetch all tools including their full schemas.\n- `gen`: Generate a local tool function configuration file from server-side definitions.\n  - This is used to prepare tool configurations for an agent.\n  - Usage: `lattice tools gen` (Interactive prompt for filename and tool names).\n\n### `toolserver`\nManage remote tool servers that provide functions to agents.\n- `add`: Register a new tool server by providing its name and URL.\n- `list`: List all registered tool servers.\n- `delete`: Unregister a tool server.\n- `clear`: Remove all tool server registrations.\n\n### `connections`\nManage external service connections (e.g., OpenAI, Anthropic, Vector DBs).\n- `list`, `add`, `delete`, `clear`.\n\n### `prompt`\nManage system prompts and templates.\n- `list`, `add`, `delete`, `clear`.\n\n### `models`\nManage model configurations.\n- `list`, `add`, `delete`, `clear`.\n\n### `rag`\nManage Retrieval-Augmented Generation (RAG) resources.\n- `list`, `add`, `delete`, `clear`.\n\n### `mcp`\nManage Model Context Protocol (MCP) resources.\n- `list`, `add`, `delete`, `clear`.\n\n### `engine`\nRun the local Lattice engine directly from the CLI.\n- `run <web|daemon>`: Starts the engine in either web mode (FastAPI) or as a background daemon.\n- **Options**:\n  - `--port`: Port for the engine (default: `44444`).\n  - `--address`: Bind address (default: `localhost`).\n  - `--socket`: Enable socket-based communication.\n\n### `launch`\nLaunch the graphical user interface.\n- `run ui`: Starts the Streamlit-based web interface for Lattice.\n\n## Configuration & Data\nBy default, `lattice-client` stores its data (config, local agents, tool definitions) in:\n- **Linux/macOS**: `~/.Lattice/client`\n- **Windows**: `%USERPROFILE%\\.Lattice\\client`\n\nYou can override this location by setting the `LAT_CL_HOME_DIR` environment variable.\n\n## Development\n\n```bash\n# Install development dependencies\npip install -e \".[dev]\"\n\n# Run tests\npytest\n```\n\n## License\nMIT\n", "lattice-server": "# Lattice Server\n\n`lattice-server` is a lightweight utility for registering Python functions as tools, typically for use with Large Language Models (LLMs). It provides a decorator-based registry and Pydantic-powered schema validation to make it easy to expose local functions via a web API.\n\n## Features\n\n- **Tool Registration**: Use `@LatticeTool.tool` to register any function with a human-readable description and JSON schema.\n- **Schema Validation**: Built-in support for Pydantic models to ensure tool metadata and responses are structured and valid.\n- **Registry Access**: Easily retrieve all registered tools and their metadata for API discovery endpoints.\n- **Standardized Responses**: Use `ToolResponse` and `ToolResHeaders` to ensure consistent API communication.\n\n## Installation\n\n```bash\npip install lattice-server\n```\n\n*(Note: If installing from source within the LatticePy workspace, use `pip install -e ./lattice-server`)*\n\n## Basic Usage\n\n### Registering a Tool\n\nUse the `LatticeTool.tool` decorator to register a function. You must provide a `description` and a `schema`.\n\n```python\nfrom latticepy.server import LatticeTool\n\n# Define a tool with a schema\n@LatticeTool.tool(\n    description=\"Calculate the square of a number.\",\n    schema={\n        \"args\": [\n            {\"name\": \"n\", \"type\": \"int\", \"description\": \"The number to square.\"}\n        ],\n        \"required\": [\"n\"],\n        \"returns\": [\n            {\"name\": \"result\", \"type\": \"int\", \"description\": \"The squared value.\"}\n        ]\n    }\n)\ndef square(n: int) -> int:\n    return n * n\n```\n\n### Retrieving Registered Tools\n\nYou can get a dictionary of all registered tools and their metadata using `LatticeTool.toollist()`.\n\n```python\ntools = LatticeTool.toollist()\nprint(tools[\"square\"])\n```\n\n\n\n### Standardizing Responses\n\nUse `ToolResponse` to wrap your tool's execution results.\n\n```python\nfrom latticepy.server import ToolResponse\n\ntry:\n    result = square(n=5)\n    response = ToolResponse(success=True, data=result)\nexcept Exception as e:\n    response = ToolResponse(success=False, error=str(e))\n\nprint(response.model_dump())\n```\n\n## API Endpoints\n\nWhile `lattice-server` is framework-agnostic, it is designed to support the following standard endpoint patterns:\n\n### `GET /api/get-tool-functions`\nReturns a dictionary of all registered tools and their metadata. This is used by LLMs or clients for tool discovery.\n\n### `POST /api/call-tool-function`\nExecutes a registered tool. Expects a JSON body with the following structure:\n```json\n{\n  \"function\": \"tool_name\",\n  \"args\": {\n    \"arg1\": \"value1\"\n  }\n}\n```\n\n## Response Format\n\nAll tool executions should return a standardized `ToolResponse`.\n\n### `ToolResponse`\n| Field | Type | Description |\n| :--- | :--- | :--- |\n| `success` | `bool` | Indicates if the tool executed successfully. |\n| `data` | `Any` | The result of the tool execution (if successful). |\n| `headers` | `ToolResHeaders` | Metadata about the response (optional). |\n| `error` | `str` | Error message (if execution failed). |\n\n### `ToolResHeaders`\n| Field | Type | Description |\n| :--- | :--- | :--- |\n| `content_type` | `str` | The MIME type or format (e.g., \"json\", \"csv\", \"image/png\"). Defaults to \"json\". |\n| `content_file_name`| `str` | Suggested filename if the data is a file. |\n| `content_description`| `str` | A human-readable description of the return content. |\n\n## Integration Example (FastAPI)\n\n```python\nfrom fastapi import FastAPI, HTTPException\nfrom latticepy.server import LatticeTool, ToolResponse, ToolResHeaders\n\napp = FastAPI()\n\n@app.get(\"/api/get-tool-functions\")\ndef get_tools():\n    return LatticeTool.toollist()\n\n@app.post(\"/api/call-tool-function\")\ndef call_tool(request: dict):\n    func_name = request.get(\"function\")\n    args = request.get(\"args\", {})\n    \n    tools = LatticeTool.toollist()\n    if func_name not in tools:\n        return ToolResponse(success=False, error=f\"Tool {func_name} not found\").model_dump()\n        \n    try:\n        # Implementation of function lookup and execution\n        # ...\n        return ToolResponse(success=True, data=result).model_dump()\n    except Exception as e:\n        return ToolResponse(success=False, error=str(e)).model_dump()\n```\n\n## Development\n\nTo set up a development environment:\n\n```bash\n# Install with dev dependencies\npip install -e \".[dev]\"\n\n# Run tests\npytest\n```\n\n## License\n\nMIT\n", "contributing": "# Contributing to Lattice AIF\n\nThank you for your interest in contributing to Lattice AIF! We welcome all contributions, including bug reports, feature requests, documentation improvements, and code changes.\n\n## How to Contribute\n\n### Reporting Bugs\n\n- Search the [GitHub Issues](https://github.com/trellisAI/lattice-aif/issues) to see if the bug has already been reported.\n- If not, create a new issue. Include a clear and descriptive title, steps to reproduce the bug, the expected behavior, and any relevant logs or screenshots.\n\n### Suggesting Features\n\n- We're always looking for new ideas! If you have a feature request, please open a new issue and describe the functionality you'd like to see, along with use cases.\n\n### Submitting Pull Requests\n\n1. **Fork the repository** and create a new branch for your changes.\n2. **Implement your changes**. Make sure to follow the existing coding style and include tests if applicable.\n3. **Run tests** to ensure your changes didn't break anything.\n4. **Submit a pull request**. Provide a clear description of your changes and why they are needed.\n\n## Development Environment Setup\n\n### Prerequisites\n\n- Python 3.8+\n- `pip`\n\n### Initializing the Workspace\n\n```bash\n# Clone the repository\ngit clone https://github.com/trellisAI/lattice-aif.git\ncd lattice-aif\n\n# Create a virtual environment\npython -m venv .venv\nsource .venv/bin/activate\n\n# Install core development dependencies\npip install -e \"./lattice-engine\"\npip install -e \"./lattice-client\"\npip install -e \"./lattice-server\"\n```\n\n## Coding Standards\n\n- **Style**: We use `black` for code formatting and `ruff` for linting.\n- **Documentation**: All new features and public API changes should include updated documentation.\n- **Commit Messages**: Use clear and concise commit messages that describe the changes.\n\n## Framework Architecture\n\nLattice AIF is divided into three core packages:\n\n- **`lattice-engine`**: The central daemon and orchestration layer.\n- **`lattice-client`**: The CLI and UI management interface.\n- **`lattice-server`**: A lightweight utility for tool registration.\n\nPlease follow the architecture and design patterns established in each package.\n\n## License\n\nBy contributing to Lattice AIF, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).\n"};
+
         // Set marked options for syntax highlighting
         marked.setOptions({
             highlight: function(code, lang) {
@@ -162,17 +140,7 @@
             langPrefix: 'hljs language-'
         });
 
-        const routes = {
-            'overview': '../README.md',
-            'lattice-engine': '../lattice-engine/README.md',
-            'lattice-client': '../lattice-client/README.md',
-            'lattice-server': '../lattice-server/README.md',
-            'contributing': 'CONTRIBUTING.md'
-        };
-
         const contentEl = document.getElementById('markdown-content');
-        const loadingEl = document.getElementById('loading');
-        const errorEl = document.getElementById('error-message');
         const navLinks = document.querySelectorAll('.nav-link');
         const mobileMenu = document.getElementById('mobile-menu');
         
@@ -186,7 +154,7 @@
                     token.href = 'latticeaif.drawio.svg';
                 }
             } else if (token.type === 'link') {
-                // Basic conversion of file-based relative links that point to other READMEs
+                // Conversion of file-based relative links that point to other READMEs
                 if (token.href.includes('lattice-engine/README.md')) token.href = '#lattice-engine';
                 if (token.href.includes('lattice-client/README.md')) token.href = '#lattice-client';
                 if (token.href.includes('lattice-server/README.md')) token.href = '#lattice-server';
@@ -195,24 +163,21 @@
         };
         marked.use({ walkTokens });
 
-        async function loadContent() {
+        function loadContent() {
             // Determine route from hash (remove the #)
             let route = window.location.hash.substring(1);
             
             // default route
-            if (!route || !routes[route]) {
+            if (!route || !docData[route]) {
                 route = 'overview';
                 window.location.hash = route;
-                // Wait for the hash change event to trigger this again
-                return;
+                return; // The hash change will trigger this again
             }
 
-            const mdPath = routes[route];
+            // Get Markdown content
+            const markdown = docData[route];
             
             // UI State updates
-            loadingEl.classList.remove('hidden');
-            contentEl.classList.add('hidden');
-            errorEl.classList.add('hidden');
             contentEl.innerHTML = '';
             
             // Update active links
@@ -224,26 +189,11 @@
                 }
             });
 
-            try {
-                const response = await fetch(mdPath);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const markdown = await response.text();
-                
-                // Parse and render
-                contentEl.innerHTML = marked.parse(markdown);
-                
-                loadingEl.classList.add('hidden');
-                contentEl.classList.remove('hidden');
-                
-                // Scroll to top
-                document.querySelector('main').scrollTop = 0;
-            } catch (error) {
-                console.error("Error loading markdown:", error);
-                loadingEl.classList.add('hidden');
-                errorEl.classList.remove('hidden');
-            }
+            // Parse and render
+            contentEl.innerHTML = marked.parse(markdown);
+            
+            // Scroll to top
+            document.querySelector('main').scrollTop = 0;
         }
 
         // Event listeners for routing
