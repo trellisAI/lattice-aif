@@ -22,19 +22,17 @@ In a world of fragmented AI capabilities, LatticeAI brings order and efficiency:
 * **Developer-Friendly:** Interact via a powerful Command Line Interface (CLI) for advanced users, and an intuitive platform for broader adoption (coming soon!).
 
 
+## 📦 Package Structure
+
+Lattice-AIF is organized into three core packages to ensure modularity and scalability:
+
+- [**lattice-engine**](file:///home/pharsha/lattice-aif/lattice-engine/README.md): The core daemon and orchestration layer.
+- [**lattice-client**](file:///home/pharsha/lattice-aif/lattice-client/README.md): The CLI and UI management layer for interacting with the engine.
+- [**lattice-server**](file:///home/pharsha/lattice-aif/lattice-server/README.md): A lightweight utility for registering and exposing tools for agents.
+
 ## 🚀 Getting Started
 
-Welcome to the Lattice AIF documentation! This guide will help you get started with the project, including an introduction and installation instructions.
-
-## Introduction
-
-Lattice AIF is an AI framework designed to help you build, deploy, and manage intelligent applications with ease. It provides a robust set of tools to create AI aagents with various capabilities and also seamless integration with your existing workflows.
-
-The client-server architecture enables scalability, modularity, resource optimisation, security and flexibility. This helps to build AI agents at scale with ease.
-
-## Installation
-
-To install Lattice AIF, follow these steps:
+To get started with Lattice AIF, you should first clone the repository and then proceed to the documentation for the specific component you wish to set up.
 
 ### 1. Clone the repository
 
@@ -43,43 +41,17 @@ git clone https://github.com/trellisAI/lattice-aif.git
 cd lattice-aif
 ```
 
-### 2. Install dependencies
+### 2. Component Setup
 
-Depending on your environment, follow the instructions below:
+Depending on your role (developer vs. user), you may want to start with different components:
 
-#### Server Setup
+- **For Core Functionality**: Start with the [**Lattice Engine**](file:///home/pharsha/lattice-aif/lattice-engine/README.md). This is the heart of the framework and must be running for agents to function.
+- **For Interaction & Management**: Refer to the [**Lattice Client**](file:///home/pharsha/lattice-aif/lattice-client/README.md) for details on using the CLI and UI to manage agents and sessions.
+- **For Tool Development**: If you are building external tools for agents, see the [**Lattice Server**](file:///home/pharsha/lattice-aif/lattice-server/README.md) documentation on how to register and expose them.
 
-1. Navigate to the server directory:
+### 3. Comprehensive Documentation
 
-   ```bash
-   cd lattice-server
-   ```
-
-2. Install server dependencies (example using pip for Python):
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Run the following command to start the server (NOT SECURE: WIP)
-
-   ```bash
-   python -m LatticePy.latticeai interactive
-   ```
-   The idea is to have two modes: one interactive and the other a daemon mode, utilising a Unix daemon socket that runs continuously as a backend service. 
-
-more details `docs/details.md` 
-
-#### Client Setup
-
-The client can be directly installed by adding the executable to the PATH.
-To download the package, refer to `packages.md`
-
-You can also build locally, refer to the client section `docs/details.md`
-
-### 3. Configuration
-
-Refer to the configuration documentation in the `docs/configuration.md` file for the inital configuration of the set up and get started
+For more detailed guides on architecture, configuration, and advanced usage, please refer to the files in the `docs/` directory or visit our online documentation.
 
 ---
 
@@ -99,7 +71,7 @@ Join our community to connect with other developers, get support, and contribute
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Whether it's code, documentation, or ideas, your input is valuable. Please see our `CONTRIBUTING.md` (coming soon) for guidelines.
+We welcome contributions from the community! Whether it's code, documentation, or ideas, your input is valuable. Please see our [CONTRIBUTING.md](file:///home/pharsha/lattice-aif/docs/CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
