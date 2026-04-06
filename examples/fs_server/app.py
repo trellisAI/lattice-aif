@@ -179,7 +179,7 @@ def call_tool_function(request: dict):
             fdata=func(**args)
             data={}
             data['res'] = fdata[0]
-            print(f"data formed: {data['res']}")
+            #print(f"data formed: {data['res']}")
             if fdata[1]:
                 data['headers'] = ToolResHeaders(**fdata[1]).model_dump()
             else:

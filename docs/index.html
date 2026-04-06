@@ -1,24 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="antialiased scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lattice AIF Documentation</title>
-    <!-- Tailwind CSS with Typography plugin -->
+    
+    <!-- Tailwind CSS with Typography -->
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
-            }
+            },
+            colors: {
+              brand: {
+                50: '#eff6ff', 100: '#dbeafe', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a'
+              }
+            },
+            typography: (theme) => ({
+              DEFAULT: {
+                css: {
+                  maxWidth: '100%',
+                  color: theme('colors.slate.600'),
+                  h1: { color: theme('colors.slate.900'), fontWeight: '800', letterSpacing: '-0.025em' },
+                  h2: { color: theme('colors.slate.900'), fontWeight: '700', letterSpacing: '-0.025em', marginTop: '2em' },
+                  h3: { color: theme('colors.slate.900'), fontWeight: '600' },
+                  'code::before': { content: '""' },
+                  'code::after': { content: '""' },
+                  code: {
+                    color: theme('colors.rose.500'),
+                    backgroundColor: theme('colors.slate.100'),
+                    padding: '0.25rem 0.375rem',
+                    borderRadius: '0.375rem',
+                    fontWeight: '500',
+                    fontSize: '0.875em',
+                  },
+                  a: {
+                    color: theme('colors.brand.600'),
+                    textDecoration: 'none',
+                    fontWeight: '500',
+                    '&:hover': { textDecoration: 'underline' },
+                  },
+                  blockquote: {
+                    borderLeftColor: theme('colors.brand.500'),
+                    backgroundColor: theme('colors.brand.50'),
+                    padding: '1rem',
+                    borderRadius: '0.5rem',
+                    fontStyle: 'normal',
+                    color: theme('colors.slate.700'),
+                  }
+                }
+              },
+              invert: {
+                css: {
+                  color: theme('colors.slate.300'),
+                  h1: { color: theme('colors.white') },
+                  h2: { color: theme('colors.white') },
+                  h3: { color: theme('colors.slate.100') },
+                  code: {
+                    color: theme('colors.rose.400'),
+                    backgroundColor: theme('colors.slate.800'),
+                  },
+                  a: {
+                    color: theme('colors.brand.400'),
+                  },
+                  blockquote: {
+                    backgroundColor: theme('colors.brand.900'),
+                    borderColor: theme('colors.brand.400'),
+                    color: theme('colors.slate.200'),
+                  }
+                }
+              }
+            })
           }
         }
       }
     </script>
-    <!-- Highlight.js for Syntax Highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    
+    <!-- Highlight.js for Syntax Highlighting (Atom One Dark theme for premium look) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     
     <!-- Marked.js for Markdown Parsing -->
@@ -31,103 +94,160 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            -webkit-font-smoothing: antialiased;
         }
+        
         .nav-link {
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
         }
+        
+        /* Modern active state with left border accent */
         .nav-link.active {
-            background-color: #e2e8f0;
-            color: #0f172a;
+            background-color: #eff6ff; /* brand-50 */
+            color: #2563eb; /* brand-600 */
             font-weight: 600;
         }
-        /* Custom scrollbar for sidebar */
-        .sidebar-scroll::-webkit-scrollbar {
-            width: 6px;
+        
+        .dark .nav-link.active {
+            background-color: rgba(30, 58, 138, 0.4); /* brand-900 w/ opacity */
+            color: #60a5fa; /* brand-400 */
         }
-        .sidebar-scroll::-webkit-scrollbar-track {
-            background: transparent;
+        
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: #3b82f6; /* brand-500 */
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
         }
-        .sidebar-scroll::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1;
-            border-radius: 20px;
+
+        /* Elegant custom scrollbar */
+        .sidebar-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        .dark .sidebar-scroll::-webkit-scrollbar-thumb { background-color: #475569; }
+        .sidebar-scroll:hover::-webkit-scrollbar-thumb { background-color: #94a3b8; }
+
+        /* Prism/Highlight JS pre padding fix */
+        pre code.hljs {
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
     </style>
 </head>
-<body class="text-slate-800 antialiased flex h-screen overflow-hidden">
+<body class="bg-white text-slate-800 dark:bg-slate-950 dark:text-slate-300 flex h-screen overflow-hidden transition-colors duration-300">
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-slate-50 border-r border-slate-200 flex-shrink-0 flex flex-col h-full hidden md:flex">
-        <div class="p-6 border-b border-slate-200">
-            <h1 class="text-xl font-bold tracking-tight text-slate-900 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path></svg>
+    <!-- Desktop Sidebar (Glassmorphism effect) -->
+    <aside class="w-72 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 flex-shrink-0 flex flex-col h-full hidden md:flex z-10 transition-colors duration-300">
+        <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center">
+                <svg class="w-6 h-6 mr-2 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path>
+                </svg>
                 Lattice AIF
             </h1>
+            <!-- Dark Mode Toggle Desktop -->
+            <button id="theme-toggle" class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
+            </button>
         </div>
-        <nav class="flex-1 overflow-y-auto sidebar-scroll p-4 space-y-1" id="nav-menu">
-            <p class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-2">Getting Started</p>
-            <a href="#overview" data-route="overview" class="nav-link block px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-100">Overview</a>
-            <a href="#contributing" data-route="contributing" class="nav-link block px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-100">Contributing</a>
+        
+        <nav class="flex-1 overflow-y-auto sidebar-scroll px-4 py-6 space-y-1" id="nav-menu">
+            <p class="px-3 py-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Getting Started</p>
+            <a href="#overview" data-route="overview" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Overview</a>
+            <a href="#contributing" data-route="contributing" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Contributing</a>
             
-            <p class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6">Core Packages</p>
-            <a href="#lattice-engine" data-route="lattice-engine" class="nav-link block px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-100">Lattice Engine</a>
-            <a href="#lattice-client" data-route="lattice-client" class="nav-link block px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-100">Lattice Client</a>
-            <a href="#lattice-server" data-route="lattice-server" class="nav-link block px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-100">Lattice Server</a>
+            <p class="px-3 py-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-8">Core Packages</p>
+            <a href="#lattice-engine" data-route="lattice-engine" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Lattice Engine</a>
+            <a href="#lattice-client" data-route="lattice-client" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Lattice Client</a>
+            <a href="#lattice-server" data-route="lattice-server" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Lattice Server</a>
         </nav>
-        <div class="p-4 border-t border-slate-200">
-            <a href="https://github.com/trellisAI/lattice-aif" target="_blank" class="flex items-center text-sm text-slate-600 hover:text-slate-900">
-                <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub" class="w-5 h-5 mr-2 opacity-70">
+        
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+            <a href="https://github.com/trellisAI/lattice-aif" target="_blank" class="flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                <svg class="w-5 h-5 mr-3 opacity-80" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 GitHub Repository
             </a>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col h-full relative overflow-hidden">
+    <div class="flex-1 flex flex-col h-full relative overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
         
-        <!-- Mobile Header -->
-        <header class="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between">
-            <h1 class="text-lg font-bold text-slate-900 flex items-center">
+        <!-- Mobile Header (Glassmorphism) -->
+        <header class="md:hidden bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between sticky top-0 z-20">
+            <h1 class="text-lg font-bold text-slate-900 dark:text-white flex items-center">
+                <svg class="w-5 h-5 mr-2 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path>
+                </svg>
                 Lattice AIF
             </h1>
-            <button id="mobile-menu-btn" class="p-2 text-slate-600 rounded-md hover:bg-slate-100">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
+            <div class="flex items-center space-x-2">
+                <button id="mobile-theme-toggle" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                   <!-- icons injected via JS to mirror desktop -->
+                </button>
+                <button id="mobile-menu-btn" class="p-2 text-slate-600 dark:text-slate-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
         </header>
 
         <!-- Main Scrollable Area -->
-        <main class="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16 bg-white">
-            <div class="max-w-4xl mx-auto">
+        <main id="main-scroll-area" class="flex-1 overflow-y-auto px-6 py-10 md:px-12 md:py-16 lg:px-24">
+            <div class="max-w-4xl mx-auto">                
                 <!-- Content injected here -->
-                <article id="markdown-content" class="prose prose-slate max-w-none prose-headings:tracking-tight prose-a:text-blue-600 prose-code:text-blue-800 prose-code:bg-blue-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-slate-900 prose-pre:p-0">
+                <article id="markdown-content" class="prose prose-slate dark:prose-invert prose-lg max-w-none transition-opacity duration-300">
+                    <!-- The generated HTML goes here -->
                 </article>
+                
+                <!-- Footer within content limits -->
+                <footer class="mt-20 pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500">
+                    <p>© 2026 Lattice AIF. Released under MIT License.</p>
+                    <a href="#" onclick="window.scrollTo(0,0)" class="mt-4 md:mt-0 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Back to top ↑</a>
+                </footer>
             </div>
         </main>
     </div>
 
     <!-- Mobile menu modal -->
-    <div id="mobile-menu" class="fixed inset-0 z-50 bg-slate-900/80 hidden transition-opacity">
-        <div class="fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex flex-col">
-            <div class="p-6 border-b border-slate-200 flex items-center justify-between">
-                <h1 class="text-xl font-bold tracking-tight text-slate-900">Lattice AIF</h1>
-                <button id="close-mobile-menu" class="p-2 text-slate-500 hover:text-slate-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    <div id="mobile-menu" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden transition-opacity">
+        <div class="fixed inset-y-0 right-0 w-72 bg-white dark:bg-slate-900 shadow-2xl flex flex-col transform transition-transform">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Menu</h1>
+                <button id="close-mobile-menu" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <nav class="flex-1 overflow-y-auto p-4 space-y-1">
-                <a href="#overview" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-900">Overview</a>
-                <a href="#contributing" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-900">Contributing</a>
-                <div class="pt-4 pb-2">
-                    <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Core Packages</p>
+                <a href="#overview" class="mobile-nav-link block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Overview</a>
+                <a href="#contributing" class="mobile-nav-link block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Contributing</a>
+                <div class="pt-6 pb-2">
+                    <p class="px-4 text-xs font-bold text-brand-500 uppercase tracking-widest">Core Packages</p>
                 </div>
-                <a href="#lattice-engine" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-900">Lattice Engine</a>
-                <a href="#lattice-client" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-900">Lattice Client</a>
-                <a href="#lattice-server" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-900">Lattice Server</a>
+                <a href="#lattice-engine" class="mobile-nav-link block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Lattice Engine</a>
+                <a href="#lattice-client" class="mobile-nav-link block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Lattice Client</a>
+                <a href="#lattice-server" class="mobile-nav-link block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Lattice Server</a>
             </nav>
         </div>
     </div>
 
     <script>
+        // Theme initialization
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
         // Embedded documentation data
         const docData = {"overview": "<p align=\"center\">\n  <img src=\"docs/logo.svg\" alt=\"Lattice AI Logo\" width=\"250\"/>\n</p>\n\nWelcome to Lattice AIF, an AI framework for building intelligent applications.\n\n## Lattice-AIF: New AI framework to create Agents\n\nLattice-AIF is an agentic framework and platform designed to build, deploy, and manage intelligent AI agents. LatticeAI Engine provides a unified abstraction layer over diverse Large Language Models (LLMs) and external tools, empowering you to create robust, actionable AI solutions with unprecedented flexibility. The client-server architecture is inspired from Docker client and Docker engine, helps to scale and mange the Agents.\n\n## HLD architecture diagram\n<img src=\"docs/latticeaif.drawio.svg\" alt=\"Lattice AI Arch\" width=\"100%\"/>\n\n## \u2728 Why Lattice-AIF?\n\nIn a world of fragmented AI capabilities, LatticeAI brings order and efficiency:\n\n* **LLM Agnostic:** Seamlessly integrate and switch between any LLM \u2013 from cloud-based powerhouses like Google Gemini and OpenAI to local, privacy-focused models like Ollama.\n* **Robust Tool-Calling:** Extend LLM capabilities beyond text generation. Connect your agents to any API, database, or internal system to perform real-world actions.\n* **Agent Orchestration:** Build complex, multi-step, multi-LLM agent workflows with ease, and manage their entire lifecycle.\n* **Lattice Engine:** Inspired by Docker Engine, the arch is designed to benefit from a continuously running, daemonized \"Lattice Engine\" that provides production-grade reliability, scalability, and resource management for your agents.\n* **Developer-Friendly:** Interact via a powerful Command Line Interface (CLI) for advanced users, and an intuitive platform for broader adoption (coming soon!).\n\n\n## \ud83d\udce6 Package Structure\n\nLattice-AIF is organized into three core packages to ensure modularity and scalability:\n\n- [**lattice-engine**](file:///home/pharsha/lattice-aif/lattice-engine/README.md): The core daemon and orchestration layer.\n- [**lattice-client**](file:///home/pharsha/lattice-aif/lattice-client/README.md): The CLI and UI management layer for interacting with the engine.\n- [**lattice-server**](file:///home/pharsha/lattice-aif/lattice-server/README.md): A lightweight utility for registering and exposing tools for agents.\n\n## \ud83d\ude80 Getting Started\n\nTo get started with Lattice AIF, you should first clone the repository and then proceed to the documentation for the specific component you wish to set up.\n\n### 1. Clone the repository\n\n```bash\ngit clone https://github.com/trellisAI/lattice-aif.git\ncd lattice-aif\n```\n\n### 2. Component Setup\n\nDepending on your role (developer vs. user), you may want to start with different components:\n\n- **For Core Functionality**: Start with the [**Lattice Engine**](file:///home/pharsha/lattice-aif/lattice-engine/README.md). This is the heart of the framework and must be running for agents to function.\n- **For Interaction & Management**: Refer to the [**Lattice Client**](file:///home/pharsha/lattice-aif/lattice-client/README.md) for details on using the CLI and UI to manage agents and sessions.\n- **For Tool Development**: If you are building external tools for agents, see the [**Lattice Server**](file:///home/pharsha/lattice-aif/lattice-server/README.md) documentation on how to register and expose them.\n\n### 3. Comprehensive Documentation\n\nFor more detailed guides on architecture, configuration, and advanced usage, please refer to the files in the `docs/` directory or visit our online documentation.\n\n---\n\n## \ud83d\udcd6 Documentation\n\nOur comprehensive documentation covers everything from installation and configuration to advanced agent development and deployment strategies.\n\n**[Explore the Docs \u2197](https://trellisai.github.io/lattice-aif/details.md)**\n\n## \ud83c\udf10 Community & Support\n\nJoin our community to connect with other developers, get support, and contribute to LatticeAI's growth:\n\n* **GitHub Issues:** Report bugs or suggest features.\n* **Discussions (Coming Soon):** Ask questions and engage with the community.\n* **Discord/Slack (Future):** Real-time chat.\n\n## \ud83e\udd1d Contributing\n\nWe welcome contributions from the community! Whether it's code, documentation, or ideas, your input is valuable. Please see our [CONTRIBUTING.md](file:///home/pharsha/lattice-aif/docs/CONTRIBUTING.md) for guidelines.\n\n## \ud83d\udcc4 License\n\nLattice-AIF is released under the [MIT License](LICENSE).", "lattice-engine": "# Lattice Engine\n\n`lattice-engine` is the core orchestration layer of the Lattice AI framework. It manages the lifecycle of AI agents, coordinates tool execution, handles long-term memory via RAG, and provides a unified interface for multiple LLM providers.\n\n## Developer Architecture\n\nFrom a developer's perspective, the engine is structured as a collection of modular services coordinated by a central bootstrap process.\n\n### 1. Bootstrapping & Configuration (`latticeai.py`)\nThe engine entry point initializes the local workspace (`~/.Lattice/server`) and loads configuration from `config.toml` using Pydantic for validation. It manages the lifecycle of sub-processes, primarily spawning the web server and database services.\n\n### 2. Service Layer (`services/`)\nThe service layer implements the core logic of the framework:\n- **`webserver.py`**: A FastAPI-based REST API that serves as the gateway for the `lattice-client`. It handles model registration, agent deployment, and chat session management.\n- **`flowengine.py`**: Manages complex multi-step execution flows. It tracks state across agent interactions and ensures that tool outputs are correctly routed to the next step.\n- **`toolengine.py`**: The execution runtime for Lattice Tools. It handles parameter mapping, execution of local tool functions, and communication with remote tool servers.\n- **`localdatabase.py`**: An SQLite-based persistence layer that stores agent definitions, prompt templates, and connection metadata.\n\n### 3. Interface Layer (`interfaces/`)\nThe engine uses an interface-driven design to ensure provider neutrality:\n- **`LLMInterface`**: Abstract base class for LLM providers (OpenAI, Anthropic, local models via Ollama/vLLM).\n- **`AgentInterface`**: Defines the lifecycle and execution contract for AI agents.\n- **`ServerInterface`**: Defines how the engine communicates with external clients and tool registries.\n\n### 4. Utilities & Extensions (`utils/`)\n- **`RAG.py`**: Provides Retrieval-Augmented Generation capabilities. It integrates with vector databases to provide agents with contextual knowledge from local or remote documents.\n- **`mcpclients.py`**: Implementation of the Model Context Protocol (MCP) client, allowing Lattice agents to seamlessly use any MCP-compliant tool server.\n\n## Key Developer Workflows\n\n### Registering a New LLM Provider\nTo add a new provider, implement the `LLMInterface` in `src/latticepy/engine/interfaces/llminterface.py` and register it in the connection management service.\n\n### Customizing Agent Flows\nDevelopers can modify `flowengine.py` to change how agents interact with one another or how they handle error recovery during complex task execution.\n\n### Extending the API\nAll external interactions go through `webserver.py`. Adding new management capabilities involves creating new FastAPI routes and corresponding service methods.\n\n## Data Persistence\nThe engine uses the following directory structure for persistent data:\n- `~/.Lattice/server/config.toml`: Engine configuration.\n- `~/.Lattice/server/localdb`: SQLite database file.\n- `~/.Lattice/engine/logs/`: Rotating log files for debugging and monitoring.\n\n## Installation for Development\n\n```bash\n# Clone the repository and install in editable mode\npip install -e ./lattice-engine\n\n# The engine depends on several core AI libraries\npip install -r ./lattice-engine/requirements.txt\n```\n\n## Running the Engine\n\nThe engine can be started directly via the `lattice` CLI (from `lattice-client`) or as a standalone module:\n\n```bash\npython -m latticepy.engine.latticeai web --port 44444\n```\n\n## License\nMIT\n", "lattice-client": "# Lattice Client\n\n`lattice-client` is the primary command-line interface (CLI) for the Lattice AI framework. it allows you to manage agents, tools, connections, and perform interactive chat sessions with a Lattice server.\n\n## Installation\n\n```bash\npip install lattice-client\n```\n\n*(Note: If installing from source within the LatticePy workspace, use `pip install -e ./lattice-client`)*\n\n## Getting Started\n\nThe first thing you should do is configure the client to point to your Lattice Server:\n\n```bash\nlattice config add\n```\n\nThis will prompt you for the Server URL (default: `http://localhost:44444/`) and an optional API Key.\n\n## CLI Commands\n\nThe `lattice` command (and its alias `latticepy-client`) provides several subcommands for managing different aspects of the framework.\n\n### `config`\nManage local client configuration.\n- `add`: Interactive prompt to add a new configuration.\n- `edit`: Interactive prompt to update the existing configuration.\n- `list` / `load`: Display the current configuration in JSON format.\n- `clear`: Remove the local configuration file.\n\n### `chat`\nStart an interactive, persistent chat session with an LLM through a specific agent.\n- **Required Arguments**:\n  - `--agent <agent_name>`: The name of the registered agent to use.\n  - `--llm <model_name>`: The model identifier (e.g., `gpt-4`, `claude-3-opus`).\n- **Usage**:\n  ```bash\n  lattice chat --agent my-helper --llm gpt-4\n  ```\n\n### `agents`\nManage AI agents on the server and locally.\n- `list`: List all agents registered on the server.\n- `add`: Create a new agent interactively (prompts for ID, prompt, and tool configuration).\n- `edit`: Update an existing agent's configuration.\n- `delete`: Remove an agent from the server.\n- `clear`: Clear the local agent registry.\n- `download`: Download agent configurations from the server to the local workspace.\n\n### `tools`\nInteract with tools and tool servers.\n- `list`: List all tools available across all connected tool servers.\n- `fetch`: Get details for a specific tool.\n  - Usage: `lattice tools fetch --name <tool_name>`\n  - `--all`: Fetch all tools.\n  - `--alldetails`: Fetch all tools including their full schemas.\n- `gen`: Generate a local tool function configuration file from server-side definitions.\n  - This is used to prepare tool configurations for an agent.\n  - Usage: `lattice tools gen` (Interactive prompt for filename and tool names).\n\n### `toolserver`\nManage remote tool servers that provide functions to agents.\n- `add`: Register a new tool server by providing its name and URL.\n- `list`: List all registered tool servers.\n- `delete`: Unregister a tool server.\n- `clear`: Remove all tool server registrations.\n\n### `connections`\nManage external service connections (e.g., OpenAI, Anthropic, Vector DBs).\n- `list`, `add`, `delete`, `clear`.\n\n### `prompt`\nManage system prompts and templates.\n- `list`, `add`, `delete`, `clear`.\n\n### `models`\nManage model configurations.\n- `list`, `add`, `delete`, `clear`.\n\n### `rag`\nManage Retrieval-Augmented Generation (RAG) resources.\n- `list`, `add`, `delete`, `clear`.\n\n### `mcp`\nManage Model Context Protocol (MCP) resources.\n- `list`, `add`, `delete`, `clear`.\n\n### `engine`\nRun the local Lattice engine directly from the CLI.\n- `run <web|daemon>`: Starts the engine in either web mode (FastAPI) or as a background daemon.\n- **Options**:\n  - `--port`: Port for the engine (default: `44444`).\n  - `--address`: Bind address (default: `localhost`).\n  - `--socket`: Enable socket-based communication.\n\n### `launch`\nLaunch the graphical user interface.\n- `run ui`: Starts the Streamlit-based web interface for Lattice.\n\n## Configuration & Data\nBy default, `lattice-client` stores its data (config, local agents, tool definitions) in:\n- **Linux/macOS**: `~/.Lattice/client`\n- **Windows**: `%USERPROFILE%\\.Lattice\\client`\n\nYou can override this location by setting the `LAT_CL_HOME_DIR` environment variable.\n\n## Development\n\n```bash\n# Install development dependencies\npip install -e \".[dev]\"\n\n# Run tests\npytest\n```\n\n## License\nMIT\n", "lattice-server": "# Lattice Server\n\n`lattice-server` is a lightweight utility for registering Python functions as tools, typically for use with Large Language Models (LLMs). It provides a decorator-based registry and Pydantic-powered schema validation to make it easy to expose local functions via a web API.\n\n## Features\n\n- **Tool Registration**: Use `@LatticeTool.tool` to register any function with a human-readable description and JSON schema.\n- **Schema Validation**: Built-in support for Pydantic models to ensure tool metadata and responses are structured and valid.\n- **Registry Access**: Easily retrieve all registered tools and their metadata for API discovery endpoints.\n- **Standardized Responses**: Use `ToolResponse` and `ToolResHeaders` to ensure consistent API communication.\n\n## Installation\n\n```bash\npip install lattice-server\n```\n\n*(Note: If installing from source within the LatticePy workspace, use `pip install -e ./lattice-server`)*\n\n## Basic Usage\n\n### Registering a Tool\n\nUse the `LatticeTool.tool` decorator to register a function. You must provide a `description` and a `schema`.\n\n```python\nfrom latticepy.server import LatticeTool\n\n# Define a tool with a schema\n@LatticeTool.tool(\n    description=\"Calculate the square of a number.\",\n    schema={\n        \"args\": [\n            {\"name\": \"n\", \"type\": \"int\", \"description\": \"The number to square.\"}\n        ],\n        \"required\": [\"n\"],\n        \"returns\": [\n            {\"name\": \"result\", \"type\": \"int\", \"description\": \"The squared value.\"}\n        ]\n    }\n)\ndef square(n: int) -> int:\n    return n * n\n```\n\n### Retrieving Registered Tools\n\nYou can get a dictionary of all registered tools and their metadata using `LatticeTool.toollist()`.\n\n```python\ntools = LatticeTool.toollist()\nprint(tools[\"square\"])\n```\n\n\n\n### Standardizing Responses\n\nUse `ToolResponse` to wrap your tool's execution results.\n\n```python\nfrom latticepy.server import ToolResponse\n\ntry:\n    result = square(n=5)\n    response = ToolResponse(success=True, data=result)\nexcept Exception as e:\n    response = ToolResponse(success=False, error=str(e))\n\nprint(response.model_dump())\n```\n\n## API Endpoints\n\nWhile `lattice-server` is framework-agnostic, it is designed to support the following standard endpoint patterns:\n\n### `GET /api/get-tool-functions`\nReturns a dictionary of all registered tools and their metadata. This is used by LLMs or clients for tool discovery.\n\n### `POST /api/call-tool-function`\nExecutes a registered tool. Expects a JSON body with the following structure:\n```json\n{\n  \"function\": \"tool_name\",\n  \"args\": {\n    \"arg1\": \"value1\"\n  }\n}\n```\n\n## Response Format\n\nAll tool executions should return a standardized `ToolResponse`.\n\n### `ToolResponse`\n| Field | Type | Description |\n| :--- | :--- | :--- |\n| `success` | `bool` | Indicates if the tool executed successfully. |\n| `data` | `Any` | The result of the tool execution (if successful). |\n| `headers` | `ToolResHeaders` | Metadata about the response (optional). |\n| `error` | `str` | Error message (if execution failed). |\n\n### `ToolResHeaders`\n| Field | Type | Description |\n| :--- | :--- | :--- |\n| `content_type` | `str` | The MIME type or format (e.g., \"json\", \"csv\", \"image/png\"). Defaults to \"json\". |\n| `content_file_name`| `str` | Suggested filename if the data is a file. |\n| `content_description`| `str` | A human-readable description of the return content. |\n\n## Integration Example (FastAPI)\n\n```python\nfrom fastapi import FastAPI, HTTPException\nfrom latticepy.server import LatticeTool, ToolResponse, ToolResHeaders\n\napp = FastAPI()\n\n@app.get(\"/api/get-tool-functions\")\ndef get_tools():\n    return LatticeTool.toollist()\n\n@app.post(\"/api/call-tool-function\")\ndef call_tool(request: dict):\n    func_name = request.get(\"function\")\n    args = request.get(\"args\", {})\n    \n    tools = LatticeTool.toollist()\n    if func_name not in tools:\n        return ToolResponse(success=False, error=f\"Tool {func_name} not found\").model_dump()\n        \n    try:\n        # Implementation of function lookup and execution\n        # ...\n        return ToolResponse(success=True, data=result).model_dump()\n    except Exception as e:\n        return ToolResponse(success=False, error=str(e)).model_dump()\n```\n\n## Development\n\nTo set up a development environment:\n\n```bash\n# Install with dev dependencies\npip install -e \".[dev]\"\n\n# Run tests\npytest\n```\n\n## License\n\nMIT\n", "contributing": "# Contributing to Lattice AIF\n\nThank you for your interest in contributing to Lattice AIF! We welcome all contributions, including bug reports, feature requests, documentation improvements, and code changes.\n\n## How to Contribute\n\n### Reporting Bugs\n\n- Search the [GitHub Issues](https://github.com/trellisAI/lattice-aif/issues) to see if the bug has already been reported.\n- If not, create a new issue. Include a clear and descriptive title, steps to reproduce the bug, the expected behavior, and any relevant logs or screenshots.\n\n### Suggesting Features\n\n- We're always looking for new ideas! If you have a feature request, please open a new issue and describe the functionality you'd like to see, along with use cases.\n\n### Submitting Pull Requests\n\n1. **Fork the repository** and create a new branch for your changes.\n2. **Implement your changes**. Make sure to follow the existing coding style and include tests if applicable.\n3. **Run tests** to ensure your changes didn't break anything.\n4. **Submit a pull request**. Provide a clear description of your changes and why they are needed.\n\n## Development Environment Setup\n\n### Prerequisites\n\n- Python 3.8+\n- `pip`\n\n### Initializing the Workspace\n\n```bash\n# Clone the repository\ngit clone https://github.com/trellisAI/lattice-aif.git\ncd lattice-aif\n\n# Create a virtual environment\npython -m venv .venv\nsource .venv/bin/activate\n\n# Install core development dependencies\npip install -e \"./lattice-engine\"\npip install -e \"./lattice-client\"\npip install -e \"./lattice-server\"\n```\n\n## Coding Standards\n\n- **Style**: We use `black` for code formatting and `ruff` for linting.\n- **Documentation**: All new features and public API changes should include updated documentation.\n- **Commit Messages**: Use clear and concise commit messages that describe the changes.\n\n## Framework Architecture\n\nLattice AIF is divided into three core packages:\n\n- **`lattice-engine`**: The central daemon and orchestration layer.\n- **`lattice-client`**: The CLI and UI management interface.\n- **`lattice-server`**: A lightweight utility for tool registration.\n\nPlease follow the architecture and design patterns established in each package.\n\n## License\n\nBy contributing to Lattice AIF, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).\n"};
 
@@ -137,7 +257,8 @@
                 const language = hljs.getLanguage(lang) ? lang : 'plaintext';
                 return hljs.highlight(code, { language }).value;
             },
-            langPrefix: 'hljs language-'
+            langPrefix: 'hljs language-',
+            gfm: true
         });
 
         const contentEl = document.getElementById('markdown-content');
@@ -147,14 +268,12 @@
         // Image Base URL fixer extension for marked
         const walkTokens = (token) => {
             if (token.type === 'image') {
-                // If it's the logo in the root README, fix the path so it works from `/docs`
                 if (token.href === 'docs/logo.svg' || token.href.startsWith('docs/')) {
                     token.href = token.href.replace('docs/', '');
                 } else if (token.href === 'docs/latticeaif.drawio.svg') {
                     token.href = 'latticeaif.drawio.svg';
                 }
             } else if (token.type === 'link') {
-                // Conversion of file-based relative links that point to other READMEs
                 if (token.href.includes('lattice-engine/README.md')) token.href = '#lattice-engine';
                 if (token.href.includes('lattice-client/README.md')) token.href = '#lattice-client';
                 if (token.href.includes('lattice-server/README.md')) token.href = '#lattice-server';
@@ -164,39 +283,37 @@
         marked.use({ walkTokens });
 
         function loadContent() {
-            // Determine route from hash (remove the #)
             let route = window.location.hash.substring(1);
-            
-            // default route
             if (!route || !docData[route]) {
                 route = 'overview';
                 window.location.hash = route;
-                return; // The hash change will trigger this again
+                return; 
             }
 
-            // Get Markdown content
-            const markdown = docData[route];
+            // Smooth fade effect
+            contentEl.style.opacity = '0';
             
-            // UI State updates
-            contentEl.innerHTML = '';
-            
-            // Update active links
-            navLinks.forEach(link => {
-                if (link.dataset.route === route) {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-
-            // Parse and render
-            contentEl.innerHTML = marked.parse(markdown);
-            
-            // Scroll to top
-            document.querySelector('main').scrollTop = 0;
+            setTimeout(() => {
+                // Update content
+                contentEl.innerHTML = marked.parse(docData[route]);
+                
+                // Update active links
+                navLinks.forEach(link => {
+                    if (link.dataset.route === route) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+                
+                // Scroll to top
+                document.getElementById('main-scroll-area').scrollTop = 0;
+                
+                // Fade in
+                contentEl.style.opacity = '1';
+            }, 150);
         }
 
-        // Event listeners for routing
         window.addEventListener('hashchange', loadContent);
         
         // Mobile menu toggle
@@ -212,8 +329,45 @@
             });
         });
 
-        // Initial load
+        // Dark mode toggle logic
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        function updateThemeIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+            } else {
+                themeToggleLightIcon.classList.add('hidden');
+                themeToggleDarkIcon.classList.remove('hidden');
+            }
+        }
+
+        const toggleTheme = () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
+            updateThemeIcons();
+        };
+
+        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+        
+        // Mirror mobile button
+        const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+        mobileThemeToggle.innerHTML = document.getElementById('theme-toggle').innerHTML;
+        mobileThemeToggle.addEventListener('click', () => {
+            toggleTheme();
+            mobileThemeToggle.innerHTML = document.getElementById('theme-toggle').innerHTML;
+            updateThemeIcons(); // Resync classes inside the copied HTML
+        });
+        
+        // Initial setup
+        updateThemeIcons();
         window.addEventListener('DOMContentLoaded', loadContent);
+
     </script>
 </body>
 </html>
