@@ -59,7 +59,7 @@ For more detailed guides on architecture, configuration, and advanced usage, ple
 
 Our comprehensive documentation covers everything from installation and configuration to advanced agent development and deployment strategies.
 
-**[Explore the Docs ↗](https://trellisai.github.io/lattice-aif/details.md)**
+**[Explore the Docs ↗](https://trellisai.github.io/lattice-aif/)**
 
 ## 🌐 Community & Support
 
