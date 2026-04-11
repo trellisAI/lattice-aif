@@ -9,6 +9,13 @@ from logging.handlers import TimedRotatingFileHandler
 from pydantic import BaseModel, ValidationError
 from typing import Optional
 
+class MinimalFormatter(logging.Formatter):
+    """A formatter that suppresses stack traces and stack info."""
+    def formatException(self, ei):
+        return ""
+    def formatStack(self, stack_info):
+        return ""
+
 
 from latticepy.engine.services.localdatabase import LocalDatabase, LocalDBModel
 
@@ -81,7 +88,14 @@ class Client:
         pass
 
 
-def main(args):
+def main():
+    parser= argparse.ArgumentParser(description="LatticeAI Client")
+    parser.add_argument("run", type=str, help="mode to run the client", choices=["web", "daemon"], default='web')
+    parser.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
+    parser.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
+    parser.add_argument("--socket", action='store_true', help="to enable socket communication")
+    parser.add_argument("--config", type=str, help="Path to the configuration file", default=None)  
+    args= parser.parse_args()
     # Configure logging
     log_dir = os.path.join(home_dir, lattice_folder, 'engine', 'logs')
     os.makedirs(log_dir, exist_ok=True)
@@ -103,7 +117,7 @@ def main(args):
     # Console Handler - Error and Warnings only
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.WARNING)
-    console_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    console_handler.setFormatter(MinimalFormatter("%(message)s"))
     root_logger.addHandler(console_handler)
 
     logger = logging.getLogger(__name__)
@@ -127,12 +141,4 @@ def main(args):
     Client.run(config)
 
 if __name__ == "__main__":
-    # Example usage
-    parser= argparse.ArgumentParser(description="LatticeAI Client")
-    parser.add_argument("run", type=str, help="mode to run the client", choices=["web", "daemon"], default='web')
-    parser.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
-    parser.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
-    parser.add_argument("--socket", action='store_true', help="to enable socket communication")
-    parser.add_argument("--config", type=str, help="Path to the configuration file", default=None)  
-    args= parser.parse_args()
-    main(args)
+    main()

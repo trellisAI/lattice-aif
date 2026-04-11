@@ -187,12 +187,19 @@ html_template = f"""<!DOCTYPE html>
         <nav class="flex-1 overflow-y-auto sidebar-scroll px-4 py-6 space-y-1" id="nav-menu">
             <p class="px-3 py-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Getting Started</p>
             <a href="#overview" data-route="overview" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Overview</a>
-            <a href="#contributing" data-route="contributing" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Contributing</a>
-            
+            <a href="#quickstart" data-route="quickstart" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Quickstart</a>
+            <br>
             <p class="px-3 py-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-8">Core Packages</p>
             <a href="#lattice-engine" data-route="lattice-engine" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Lattice Engine</a>
             <a href="#lattice-client" data-route="lattice-client" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Lattice Client</a>
             <a href="#lattice-server" data-route="lattice-server" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Lattice Server</a>
+            <br>
+            <p class="px-3 py-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-8">Examples</p>
+            <a href="#example-1" data-route="example-1" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">file system agent</a>
+            <a href="#example-2" data-route="example-2" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">web search agent</a>
+            <br>
+            <p class="px-3 py-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-8">Development</p>
+            <a href="#contributing" data-route="contributing" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Contributing</a>
         </nav>
         
         <div class="p-4 border-t border-slate-200 dark:border-slate-800">
@@ -235,6 +242,8 @@ html_template = f"""<!DOCTYPE html>
                 <!-- Footer within content limits -->
                 <footer class="mt-20 pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500">
                     <p>© 2026 Lattice AIF. Released under MIT License.</p>
+                    <p>Built with ❤️ by TrellisAI</p>
+                    <p> This Documentation is auto generated from the Readme.md files.</p>
                     <a href="#" onclick="window.scrollTo(0,0)" class="mt-4 md:mt-0 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Back to top ↑</a>
                 </footer>
             </div>
@@ -396,7 +405,7 @@ html_template = f"""<!DOCTYPE html>
 </html>
 """
 
-with open('index.html', 'w', encoding='utf-8') as f:
+with open('docs.html', 'w', encoding='utf-8') as f:
     f.write(html_template)
 
-print("index.html successfully updated with premium embedded content.")
+print("docs.html successfully updated with premium embedded content.")
