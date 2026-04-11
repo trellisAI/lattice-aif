@@ -4,8 +4,15 @@ Lattice Client CLI - improved and hardened version.
 """
 from __future__ import annotations
 
-import argparse
+import typer
 import getpass
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.markdown import Markdown
+from rich.prompt import Prompt, Confirm
+
+console = Console()
 import json
 import os
 import stat
@@ -23,37 +30,52 @@ from urllib.parse import urljoin
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from . import init_client_home, default_client_dir
+from . import init_client_home
 
 # Initialize module-level logger after reading environment defaults
-LOG_NAME = "latticeclient"
 
+CLIENT_DIR = init_client_home()
 
-def setup_logging(level: Optional[str] = None, logfile: Optional[str] = None) -> logging.Logger:
-    """
-    Configure logging for the CLI. Reads defaults from environment variables:
-    - LAT_CL_LOG_LEVEL (e.g. DEBUG, INFO)
-    - LAT_CL_LOG_FILE (path to log file)
-    The `level` and `logfile` parameters override the environment settings.
-    """
+class MinimalFormatter(logging.Formatter):
+    """A formatter that suppresses stack traces and stack info."""
+    def formatException(self, ei):
+        return ""
+    def formatStack(self, stack_info):
+        return ""
+
+def setup_logging(level: Optional[str] = None, logfile: Optional[str] = None, debug: bool = False) -> logging.Logger:
+    LOG_NAME = "latticeclient"
     env_level = os.getenv("LAT_CL_LOG_LEVEL", "INFO")
-    env_file = os.getenv("LAT_CL_LOG_FILE")
+    env_file = Path(CLIENT_DIR) / "logs" / "lattice.log"
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    env_file.touch(exist_ok=True)
     chosen_level = (level or env_level).upper()
     numeric_level = getattr(logging, chosen_level, logging.INFO)
 
     logger = logging.getLogger(LOG_NAME)
+    
+    # Standard format for files and debug mode
+    verbose_formatter = logging.Formatter(
+        "%(asctime)s %(levelname)s [%(name)s] %(message)s", "%Y-%m-%d %H:%M:%S"
+    )
+    # Minimal message-only format for standard CLI output
+    minimal_formatter = MinimalFormatter("%(message)s")
+
+    # If handlers already exist, we might want to update them (e.g., when main calls setup_logging with debug)
     if logger.handlers:
-        # Avoid adding multiple handlers on repeated imports
         logger.setLevel(numeric_level)
+        for h in logger.handlers:
+            h.setLevel(numeric_level)
+            if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.handlers.RotatingFileHandler):
+                h.setFormatter(verbose_formatter if debug else minimal_formatter)
+            else:
+                h.setFormatter(verbose_formatter)
         return logger
 
     logger.setLevel(numeric_level)
-    formatter = logging.Formatter(
-        "%(asctime)s %(levelname)s [%(name)s] %(message)s", "%Y-%m-%d %H:%M:%S"
-    )
 
     stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setFormatter(formatter)
+    stream_handler.setFormatter(verbose_formatter if debug else minimal_formatter)
     stream_handler.setLevel(numeric_level)
     logger.addHandler(stream_handler)
 
@@ -61,12 +83,13 @@ def setup_logging(level: Optional[str] = None, logfile: Optional[str] = None) ->
     if path:
         try:
             fh = logging.handlers.RotatingFileHandler(path, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
-            fh.setFormatter(formatter)
+            fh.setFormatter(verbose_formatter)
             fh.setLevel(numeric_level)
             logger.addHandler(fh)
         except Exception:
             # If file handler can't be created, keep running with console logging
-            logger.exception("Failed to create log file handler; continuing with console logging")
+            # (using error instead of exception to avoid stack trace on console initialization)
+            logger.error("Failed to create log file handler; continuing with console logging")
 
     # Keep requests' debug logging quieter unless debug enabled for our logger
     if numeric_level > logging.DEBUG:
@@ -96,8 +119,7 @@ def load_config() -> None:
     If the file does not exist, `data` will stay empty.
     """
     global data
-    client_dir = default_client_dir()
-    config_path = client_dir / "config.toml"
+    config_path = CLIENT_DIR / "config.toml"
     if not config_path.exists():
         data = {}
         logger.debug("Config file %s not found; using empty configuration", config_path)
@@ -116,9 +138,8 @@ def save_config(url: Optional[str], api_key: Optional[str]) -> None:
     Save configuration to the user's config file with secure permissions (0600).
     Passing api_key=None will omit the key from the file.
     """
-    client_dir = default_client_dir()
-    ensure_client_dirs(client_dir)
-    config_path = client_dir / "config.toml"
+    ensure_client_dirs(CLIENT_DIR)
+    config_path = CLIENT_DIR / "config.toml"
     cfg: Dict[str, Any] = {}
     if url:
         cfg["url"] = url
@@ -141,15 +162,12 @@ def confirm(prompt: str, default: bool = True) -> bool:
     """
     Ask user for a yes/no confirmation. Returns True for yes.
     """
-    default_str = "Y/n" if default else "y/N"
     try:
-        ans = input(f"{prompt} [{default_str}]: ").strip().lower()
+        return Confirm.ask(prompt, default=default)
     except (KeyboardInterrupt, EOFError):
         logger.info("Operation cancelled by user.")
         return False
-    if ans == "":
-        return default
-    return ans in ("y", "yes")
+
 
 
 def safe_input(prompt: str, default: Optional[str] = None, hide: bool = False) -> Optional[str]:
@@ -157,17 +175,13 @@ def safe_input(prompt: str, default: Optional[str] = None, hide: bool = False) -
     Read input from the user, returning default if blank. If hide=True uses getpass.
     """
     try:
-        if hide:
-            val = getpass.getpass(prompt)
-        else:
-            val = input(prompt)
+        val = Prompt.ask(prompt, password=hide, default=default if default is not None else "")
     except (KeyboardInterrupt, EOFError):
         logger.info("Input interrupted by user.")
         return None
-    val = (val or "").strip()
-    if not val and default is not None:
-        return default
+    val = val.strip()
     return val or None
+
 
 
 def config(action: str) -> None:
@@ -177,9 +191,8 @@ def config(action: str) -> None:
     - clear: remove config file
     - list / load: print currently loaded config
     """
-    client_dir = default_client_dir()
-    ensure_client_dirs(client_dir)
-    config_path = client_dir / "config.toml"
+    ensure_client_dirs(CLIENT_DIR)
+    config_path = CLIENT_DIR / "config.toml"
 
     if action in ("add", "edit"):
         logger.info("Generating/updating config file inside Lattice client folder.")
@@ -210,8 +223,7 @@ def config(action: str) -> None:
     if action in ("list", "load"):
         load_config()
         if data:
-            # keep printed JSON on stdout for ease of piping
-            print(json.dumps(data, indent=2))
+            console.print_json(data=data)
         else:
             logger.info("Config file does not exist or is empty.")
         return
@@ -219,7 +231,6 @@ def config(action: str) -> None:
     logger.error("Unsupported config action: %s", action)
 
 
-# Attempt to load config at import time so classes can pick up defaults
 load_config()
 
 
@@ -255,7 +266,7 @@ class ChatCompletionResponse(BaseModel):
     usage: Dict[str, int]
 
 
-def make_session(api_key: Optional[str], timeout: int = 10, retries: int = 3) -> requests.Session:
+def make_session(api_key: Optional[str], timeout: int = 50, retries: int = 3) -> requests.Session:
     s = requests.Session()
     # retry strategy for idempotent methods and server errors
     retry_strategy = Retry(
@@ -290,13 +301,13 @@ def validate_chat_response(resp_json: Any) -> Optional[ChatCompletionResponse]:
             logger.exception("Failed to validate chat response: %s", e)
             return None
 
-
+"""
 def engine(args) -> None:
-    """
+
     Start local engine. This function will attempt to import and spawn
     the engine in a new process. The previous behavior called an external
     command via os.system; choose one behavior and keep consistent.
-    """
+
     import multiprocessing as mp
 
     logger.info("Starting Lattice Engine...")
@@ -319,23 +330,24 @@ def engine(args) -> None:
     p.daemon = False
     p.start()
     logger.info("Engine process started (pid=%s).", p.pid)
-
+"""
 
 def chat(llm: str, agent: Optional[str] = None) -> None:
-    logger.info("Starting chat session. Type 'exit' to quit.")
+    console.print(Panel(f" Starting chat session with [cyan]{agent or 'default'}[/cyan] using [magenta]{llm}[/magenta].\n Welcome to LatticeAIF! \n Type 'exit' to quit.", title="Lattice Chat", border_style="green"))
     base_url = data.get("url", DEFAULT_BASE_URL)
     api_key = data.get("api_key", None)
     session = make_session(api_key)
     endpoint = urljoin(base_url.rstrip("/") + "/", "api/lattice/chat")
     while True:
         try:
-            user_input = input("You: ")
+            print("\n")
+            user_input = Prompt.ask("[bold green]You[/bold green]")
         except (KeyboardInterrupt, EOFError):
-            logger.info("Exiting chat session.")
+            console.print("\n[yellow]Exiting chat session.[/yellow]")
             break
 
         if user_input is None or user_input.strip().lower() in ("exit", "quit"):
-            logger.info("Exiting chat session.")
+            console.print("\n[yellow]Exiting chat session.[/yellow]")
             break
 
         request = ChatRequest(agent=agent, model=llm, messages=[Message(role="user", content=user_input)])
@@ -367,8 +379,9 @@ def chat(llm: str, agent: Optional[str] = None) -> None:
             continue
 
         for choice in chat_response.choices:
-            # Use print here to keep instant readability for chat interface (stdout)
-            print(f"Agent: {choice.message.content}")
+            console.print("\n[bold blue]Agent:[/bold blue]")
+            console.print(Markdown(choice.message.content))
+            console.print("---")
 
 
 def launch_ui() -> None:
@@ -393,7 +406,46 @@ class CliOptions:
         try:
             response = self.session.get(self.endpoint, timeout=self.session.request_timeout)
             response.raise_for_status()
-            print(response.json())
+            data = response.json()
+            if isinstance(data, list):
+                if not data:
+                    console.print("[yellow]Empty[/yellow]")
+                    return
+                if isinstance(data[0], dict):
+                    table = Table(show_header=True, header_style="bold magenta", border_style="cyan")
+                    keys = data[0].keys()
+                    for k in keys:
+                        table.add_column(str(k))
+                    for item in data:
+                        table.add_row(*[str(item.get(k, "")) for k in keys])
+                    console.print(table)
+                else:
+                    table = Table("Item", show_header=True, header_style="bold magenta", border_style="cyan")
+                    for item in data:
+                        table.add_row(str(item))
+                    console.print(table)
+            elif isinstance(data, dict):
+                # Try to find a list value in the dict to render as table (e.g., {"connections": [...]})
+                list_keys = [k for k, v in data.items() if isinstance(v, list)]
+                if len(list_keys) == 1 and data[list_keys[0]]:
+                    if isinstance(data[list_keys[0]][0], dict):
+                        table = Table(title=list_keys[0].capitalize(), show_header=True, header_style="bold magenta", border_style="cyan")
+                        keys = data[list_keys[0]][0].keys()
+                        for k in keys:
+                            table.add_column(str(k))
+                        for item in data[list_keys[0]]:
+                            table.add_row(*[str(item.get(k, "")) for k in keys])
+                        console.print(table)
+                    else:
+                        table = Table(title=list_keys[0].capitalize(), show_header=True, header_style="bold magenta", border_style="cyan")
+                        table.add_column("Item")
+                        for item in data[list_keys[0]]:
+                            table.add_row(str(item))
+                        console.print(table)
+                else:
+                    console.print_json(data=data)
+            else:
+                console.print(data)
         except Exception as e:
             logger.exception("Error fetching list: %s", e)
 
@@ -401,7 +453,7 @@ class CliOptions:
         try:
             response = self.session.post(self.endpoint, timeout=self.session.request_timeout)
             response.raise_for_status()
-            print(response.json())
+            console.print_json(data=response.json())
         except Exception as e:
             logger.exception("Error adding resource: %s", e)
 
@@ -409,7 +461,7 @@ class CliOptions:
         try:
             response = self.session.delete(self.endpoint, timeout=self.session.request_timeout)
             response.raise_for_status()
-            print(response.json())
+            console.print_json(data=response.json())
         except Exception as e:
             logger.exception("Error deleting resource: %s", e)
 
@@ -418,7 +470,7 @@ class CliOptions:
         try:
             response = self.session.delete(self.endpoint, timeout=self.session.request_timeout)
             response.raise_for_status()
-            print(response.json())
+            console.print_json(data=response.json())
         except Exception as e:
             logger.exception("Error clearing resource: %s", e)
 
@@ -442,7 +494,7 @@ class AgentsCliOptions(CliOptions):
             logger.error("Tool filename is required.")
             return
         logger.info("By default tools are defined as 'rephrase', but you can choose 'pass', 'flow', or 'rag'. See wiki for details.")
-        tools_path = Path(default_client_dir()) / "tools"
+        tools_path = CLIENT_DIR / "tools"
         if not tools_path.exists():
             tools_path.mkdir(parents=True, exist_ok=True)
         toolfile_path = tools_path / toolfile
@@ -478,7 +530,7 @@ class AgentsCliOptions(CliOptions):
             response = self.session.post(self.endpoint, json=payload, timeout=self.session.request_timeout)
             response.raise_for_status()
             logger.info("Saving the agent configuration locally.")
-            agents_dir = Path(default_client_dir()) / "agents"
+            agents_dir = CLIENT_DIR / "agents"
             agents_dir.mkdir(parents=True, exist_ok=True)
             with (agents_dir / f"{agent_id}_config.json").open("w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=4)
@@ -497,7 +549,7 @@ class AgentsCliOptions(CliOptions):
         if prompt:
             payload["prompt"] = prompt
         if toolfile:
-            tools_path = Path(default_client_dir()) / "tools"
+            tools_path = CLIENT_DIR / "tools"
             toolfile_path = tools_path / toolfile
             try:
                 with toolfile_path.open("r", encoding="utf-8") as f:
@@ -525,7 +577,7 @@ class AgentsCliOptions(CliOptions):
             response = self.session.put(urljoin(self.endpoint + "/", agent_id), json=payLoad, timeout=self.session.request_timeout)
             response.raise_for_status()
             logger.info("Updating the agent configuration locally.")
-            agents_dir = Path(default_client_dir()) / "agents"
+            agents_dir = CLIENT_DIR / "agents"
             agents_dir.mkdir(parents=True, exist_ok=True)
             with (agents_dir / f"{agent_id}_config.json").open("w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=4)
@@ -533,11 +585,9 @@ class AgentsCliOptions(CliOptions):
         except Exception as e:
             logger.exception("Error updating agent: %s", e)
 
-
 class ConnCliOptions(CliOptions):
     def __init__(self):
         super().__init__("/api/lattice/connections")
-
 
 class PromptsCliOptions(CliOptions):
     def __init__(self):
@@ -572,7 +622,7 @@ class LatticeToolServer(CliOptions):
         try:
             response = self.session.post(self.endpoint, json=payload, timeout=self.session.request_timeout)
             response.raise_for_status()
-            print(response.json())
+            console.print_json(data=response.json())
         except Exception as e:
             logger.exception("Error adding tool server: %s", e)
 
@@ -590,7 +640,10 @@ class ToolsData(CliOptions):
                     response.raise_for_status()
                     data_json = response.json()
                     tools = data_json.get("Lattice Tools", {})
-                    print(*tools.keys(), sep="\n")
+                    table = Table("Tool Name", title="Lattice Tools", show_header=True, header_style="bold magenta", border_style="cyan")
+                    for k in tools.keys():
+                        table.add_row(str(k))
+                    console.print(table)
                 except Exception as e:
                     logger.exception("Error fetching all tools: %s", e)
                 return
@@ -598,7 +651,7 @@ class ToolsData(CliOptions):
                 try:
                     response = self.session.get(self.endpoint, timeout=self.session.request_timeout)
                     response.raise_for_status()
-                    print(response.json())
+                    console.print_json(data=response.json())
                 except Exception as e:
                     logger.exception("Error fetching all tool details: %s", e)
                 return
@@ -609,7 +662,7 @@ class ToolsData(CliOptions):
             try:
                 response = self.session.get(urljoin(self.endpoint + "/", name), timeout=self.session.request_timeout)
                 response.raise_for_status()
-                print(response.json())
+                console.print_json(data=response.json())
             except Exception as e:
                 logger.exception("Error fetching tool %s: %s", name, e)
 
@@ -734,7 +787,7 @@ class ToolsData(CliOptions):
             except Exception as e:
                 logger.exception("Failed to generate format for tool %s: %s", tool, e)
 
-        tools_dir = Path(default_client_dir()) / "tools"
+        tools_dir = CLIENT_DIR / "tools"
         tools_dir.mkdir(parents=True, exist_ok=True)
         target = tools_dir / filename
         try:
@@ -768,123 +821,147 @@ class ModelOptions(CliOptions):
         logger.info("Model clearing not supported; models are auto-loaded from the connections")
 
 
+app = typer.Typer(help="Lattice CLI - manage agents, tools, connections, and perform chat interactions with the Lattice server.", no_args_is_help=True)
+
+config_app = typer.Typer(help="Manage local client configuration (url, api_key)", no_args_is_help=True)
+app.add_typer(config_app, name="config")
+
+agents_app = typer.Typer(help="Manage agents", no_args_is_help=True)
+app.add_typer(agents_app, name="agents")
+
+connections_app = typer.Typer(help="Manage connections", no_args_is_help=True)
+app.add_typer(connections_app, name="connections")
+
+prompts_app = typer.Typer(help="Manage prompts", no_args_is_help=True)
+app.add_typer(prompts_app, name="prompt")
+
+toolserver_app = typer.Typer(help="Manage tool servers", no_args_is_help=True)
+app.add_typer(toolserver_app, name="toolserver")
+
+tools_app = typer.Typer(help="Interact with tools and tool servers", no_args_is_help=True)
+app.add_typer(tools_app, name="tools")
+
+mcp_app = typer.Typer(help="Manage MCP resources", no_args_is_help=True)
+app.add_typer(mcp_app, name="mcp")
+
+models_app = typer.Typer(help="Manage models", no_args_is_help=True)
+app.add_typer(models_app, name="models")
+
+rag_app = typer.Typer(help="Manage RAG resources", no_args_is_help=True)
+app.add_typer(rag_app, name="rag")
+
+@app.callback()
+def main_callback(debug: bool = typer.Option(False, "--debug", help="Enable debug logging")):
+    if debug:
+        setup_logging(level="DEBUG", debug=True)
+
+@config_app.command("edit")
+@config_app.command("add")
+def config_add_edit():
+    config("edit")
+
+@config_app.command("clear")
+def config_clear():
+    config("clear")
+
+@config_app.command("list")
+@config_app.command("load")
+def config_list_load():
+    config("list")
+
+@app.command("chat", help="Start an interactive chat session with an LLM")
+def chat_cmd(
+    agent: str = typer.Option(..., help="Agent name to use for chat"),
+    llm: str = typer.Option(..., help="LLM model to be used for chat")
+):
+    chat(llm, agent)
+
+"""
+@app.command("engine", help="Run local engine")
+def engine_cmd(
+    run: str = typer.Argument(..., help="mode to run the client (web or daemon)"),
+    port: int = typer.Option(44444, help="Port number to run the client on"),
+    address: str = typer.Option("localhost", help="Address to run the client on"),
+    socket: bool = typer.Option(False, help="to enable socket communication"),
+    config_file: Optional[str] = typer.Option(None, "--config", help="Path to the configuration file")
+):
+    class Args: pass
+    args = Args()
+    args.run = run
+    args.port = port
+    args.address = address
+    args.socket = socket
+    args.config = config_file
+    engine(args)
+"""
+
+@app.command("launch", help="launch ui")
+def launch_cmd(run: str = typer.Argument(..., help="'ui' to run web ui")):
+    if run == "ui":
+        launch_ui()
+    else:
+        logger.error("Command %s not supported for launch", run)
+
+def bind_standard_commands(tgt_app: typer.Typer, cls) -> None:
+    @tgt_app.command("list")
+    def list_cmd():
+        cls().list()
+    @tgt_app.command("add")
+    def add_cmd():
+        cls().add()
+    @tgt_app.command("delete")
+    def delete_cmd():
+        cls().delete()
+    @tgt_app.command("clear")
+    def clear_cmd():
+        cls().clear()
+
+bind_standard_commands(connections_app, ConnCliOptions)
+bind_standard_commands(prompts_app, PromptsCliOptions)
+bind_standard_commands(toolserver_app, LatticeToolServer)
+bind_standard_commands(mcp_app, MCPCliOptions)
+bind_standard_commands(models_app, ModelOptions)
+bind_standard_commands(rag_app, RAGCliOptions)
+bind_standard_commands(agents_app, AgentsCliOptions)
+
+@agents_app.command("edit")
+def agents_edit():
+    AgentsCliOptions().edit()
+
+@agents_app.command("download")
+def agents_download():
+    cmd = getattr(AgentsCliOptions(), "download", None)
+    if cmd:
+        cmd()
+    else:
+        logger.error("Command download not supported for agents")
+
+@tools_app.command("list")
+def tools_list():
+    ToolsData().list()
+
+@tools_app.command("fetch")
+def tools_fetch(
+    name: Optional[List[str]] = typer.Option(None, "--name", help="Tool server name or tool name depending on subcommand"),
+    all: bool = typer.Option(False, "--all", help="Fetch all tools from all tool servers"),
+    alldetails: bool = typer.Option(False, "--alldetails", help="Fetch all tools and details from all tool servers"),
+):
+    class Args: pass
+    args = Args()
+    args.name = name
+    args.all = all
+    args.alldetails = alldetails
+    ToolsData().fetch(args)
+
+@tools_app.command("gen")
+def tools_gen():
+    class Args: pass
+    ToolsData().gen(Args())
+
+
 def main() -> None:
     logger.info("Lattice Client CLI Tool")
-    parser = argparse.ArgumentParser(
-        "lattice-client",
-        description="Lattice CLI - manage agents, tools, connections, and perform chat interactions with the Lattice server.",
-    )
-    # Global options
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
-    subparsers = parser.add_subparsers(dest="isubcommand")
-
-    parser_o = subparsers.add_parser("config", help="Manage local client configuration (url, api_key)")
-    parser_o.add_argument("subcommand", choices=["edit", "clear", "add", "list", "load"])
-
-    parser_h = subparsers.add_parser("chat", help="Start an interactive chat session with an LLM")
-    parser_h.add_argument("--agent", type=str, help="Agent name to use for chat", required=True)
-    parser_h.add_argument("--llm", type=str, help="LLM model to be used for chat", required=True)
-
-    parser_a = subparsers.add_parser("agents", help="Manage agents")
-    parser_a.add_argument("subcommand", choices=["list", "clear", "delete", "add", "edit", "download"])
-
-    parser_c = subparsers.add_parser("connections", help="Manage connections")
-    parser_c.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-
-    parser_p = subparsers.add_parser("prompt", help="Manage prompts")
-    parser_p.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-
-    parser_t = subparsers.add_parser("toolserver", help="Manage tool servers")
-    parser_t.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-
-    parser_l = subparsers.add_parser("tools", help="Interact with tools and tool servers")
-    parser_l.add_argument("subcommand", choices=["list", "fetch", "gen"])
-    parser_l.add_argument("--name", nargs=1, help="Tool server name or tool name depending on subcommand")
-    parser_l.add_argument("--all", action="store_true", help="Fetch all tools from all tool servers")
-    parser_l.add_argument("--alldetails", action="store_true", help="Fetch all tools and details from all tool servers")
-
-    parser_m = subparsers.add_parser("mcp", help="Manage MCP resources")
-    parser_m.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-
-    parser_d = subparsers.add_parser("models", help="Manage models")
-    parser_d.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-
-    parser_r = subparsers.add_parser("rag", help="Manage RAG resources")
-    parser_r.add_argument("subcommand", choices=["list", "clear", "delete", "add"])
-
-    parser_e = subparsers.add_parser("engine", help="Run local engine")
-    parser_e.add_argument("run", choices=["web", "daemon"])
-    parser_e.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
-    parser_e.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
-    parser_e.add_argument("--socket", action="store_true", help="to enable socket communication")
-    parser_e.add_argument("--config", type=str, help="Path to the configuration file", default=None)
-
-    parser_u = subparsers.add_parser("launch", help="Run local engine")
-    parser_u.add_argument("run", choices=['ui'])
-
-    args = parser.parse_args()
-
-    # Reconfigure logger if --debug passed
-    if getattr(args, "debug", False):
-        logger.setLevel(logging.DEBUG)
-        for h in logger.handlers:
-            h.setLevel(logging.DEBUG)
-        logging.getLogger("requests").setLevel(logging.DEBUG)
-        logging.getLogger("urllib3").setLevel(logging.DEBUG)
-        logger.debug("Debug logging enabled via CLI flag")
-
-    if not args.isubcommand:
-        parser.print_help()
-        return
-
-    if args.isubcommand == "config":
-        config(args.subcommand)
-        return
-
-    if args.isubcommand == "engine":
-        engine(args)
-        return
-
-    if args.isubcommand == "chat":
-        chat(args.llm, args.agent)
-        return
-    
-    if args.isubcommand == "launch":
-        if args.run == 'ui':
-            launch_ui()
-
-    call = {
-        "agents": AgentsCliOptions,
-        "connections": ConnCliOptions,
-        "prompts": PromptsCliOptions,
-        "toolserver": LatticeToolServer,
-        "tools": ToolsData,
-        "models": ModelOptions,
-        "rag": RAGCliOptions,
-        "mcp": MCPCliOptions,
-    }
-
-    if args.isubcommand not in call:
-        logger.error("Unknown command: %s", args.isubcommand)
-        return
-
-    try:
-        met = call[args.isubcommand]()
-    except Exception as e:
-        logger.exception("Failed to initialize CLI handler for %s: %s", args.isubcommand, e)
-        return
-
-    cmd = getattr(met, args.subcommand, None)
-    if not cmd:
-        logger.error("Command %s not supported for %s", args.subcommand, args.isubcommand)
-        return
-
-    try:
-        cmd(args)
-    except Exception as e:
-        logger.exception("Unhandled exception while executing command: %s", e)
-
+    app()
 
 if __name__ == "__main__":
-    init_client_home()
     main()

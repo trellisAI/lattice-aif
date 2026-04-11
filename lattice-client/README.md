@@ -32,6 +32,7 @@ Manage local client configuration.
 - `clear`: Remove the local configuration file.
 
 ### `chat`
+![alt text](../docs/images/image.png)
 Start an interactive, persistent chat session with an LLM through a specific agent.
 - **Required Arguments**:
   - `--agent <agent_name>`: The name of the registered agent to use.
