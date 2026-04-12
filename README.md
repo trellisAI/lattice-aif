@@ -19,7 +19,8 @@ In a world of fragmented AI capabilities, LatticeAI brings order and efficiency:
 * **Robust Tool-Calling:** Extend LLM capabilities beyond text generation. Connect your agents to any API, database, or internal system to perform real-world actions.
 * **Agent Orchestration:** Build complex, multi-step, multi-LLM agent workflows with ease, and manage their entire lifecycle.
 * **Lattice Engine:** Inspired by Docker Engine, the arch is designed to benefit from a continuously running, daemonized "Lattice Engine" that provides production-grade reliability, scalability, and resource management for your agents.
-* **Developer-Friendly:** Convert your existing Automation and Applications into AI tools without much workload along with MCP Integration.
+* **Developer-Friendly:** Easily convert your existing Automation and Applications into AI tools without much workload alongside MCP servers.
+* **User-Friendly:** Simple and intuitive CLI interface for easy interaction with the agents.
 * **Memory Management:** Have a inbuilt memory management layer for the Agents.
 * **logging & Token Management:** Have a inbuilt logging and token management layer for the Agents.
 
@@ -37,6 +38,16 @@ Our comprehensive documentation covers everything from installation and configur
 
 **[Explore the Docs](https://trellisai.github.io/lattice-aif/docs.html)**
 
+
+## Other
+Lattice AIF is a work in progress. It is not production ready. It is part of a larger project called TrellisAI, under which we have LatticeUI, shadow, and haze.
+
+[shadow](https://github.com/trellisAI/shadow) is agent management tool, which is used to install, deploy, and manage the agents. its more like a pip/npm for agents.
+
+[haze](https://github.com/trellisAI/Haze) is a software for local homelab setup. it helps you to set up the homelab with both defined hardware and software.
+
+[LatticeUI](https://github.com/trellisAI/lattice-ui) is a UI interface for all the above applications. It is for end users with simple UI to manage agents, hardware,tools, and flows.
+
 ## 🤝 Contributing
 
 We welcome contributions from the community! Whether it's code, documentation, or ideas, your input is valuable. Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -50,4 +61,3 @@ Join our community to connect with other developers, get support, and contribute
 ## 📄 License
 
 Lattice-AIF(TrellisAI Product) is released under the [MIT License](LICENSE).
-

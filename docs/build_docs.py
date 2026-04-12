@@ -3,6 +3,7 @@ import os
 
 files_to_read = {
     'overview': '../README.md',
+    'history': 'AgentAI.md',
     'lattice-engine': '../lattice-engine/README.md',
     'lattice-client': '../lattice-client/README.md',
     'lattice-server': '../lattice-server/README.md',
@@ -187,6 +188,7 @@ html_template = f"""<!DOCTYPE html>
         <nav class="flex-1 overflow-y-auto sidebar-scroll px-4 py-6 space-y-1" id="nav-menu">
             <p class="px-3 py-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Getting Started</p>
             <a href="#overview" data-route="overview" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Overview</a>
+            <a href="#history" data-route="history" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Brief history of AI</a>
             <a href="#quickstart" data-route="quickstart" class="nav-link block px-3 py-2.5 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Quickstart</a>
             <br>
             <p class="px-3 py-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-8">Core Packages</p>
@@ -261,6 +263,7 @@ html_template = f"""<!DOCTYPE html>
             </div>
             <nav class="flex-1 overflow-y-auto p-4 space-y-1">
                 <a href="#overview" class="mobile-nav-link block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Overview</a>
+                <a href="#history" class="mobile-nav-link block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Brief history of AI</a>
                 <a href="#contributing" class="mobile-nav-link block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Contributing</a>
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-xs font-bold text-brand-500 uppercase tracking-widest">Core Packages</p>
@@ -310,6 +313,7 @@ html_template = f"""<!DOCTYPE html>
                 if (token.href.includes('lattice-client/README.md')) token.href = '#lattice-client';
                 if (token.href.includes('lattice-server/README.md')) token.href = '#lattice-server';
                 if (token.href.includes('docs/CONTRIBUTING.md')) token.href = '#contributing';
+                if (token.href.includes('AgentAI.md')) token.href = '#history';
             }}
         }};
         marked.use({{ walkTokens }});
