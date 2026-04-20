@@ -33,21 +33,11 @@ Lattice-AIF is organized into three core packages to ensure modularity and scala
 - [**lattice-client**](file:///home/pharsha/lattice-aif/lattice-client/README.md): The CLI layer for the user to interact with the engine. This package also includes a small streamlit UI application for demo. A standard UI web/desktop application is available as a seperate project([lattice-ui](https://github.com/trellisAI/lattice-ui)).
 - [**lattice-server**](file:///home/pharsha/lattice-aif/lattice-server/README.md): A lightweight utility for registering and exposing tools for agents. This provides a simple interface to expose tools to the engine using decorators to wrap existing python functions and classes. It provides alternative to MCP servers.
 
-## 📖 Documentation
-
-Our comprehensive documentation covers everything from installation and configuration to advanced agent development and deployment strategies.
-
-**[Explore the Docs](https://trellisai.github.io/lattice-aif/docs.html)**
-
-
-## Other
-Lattice AIF is a work in progress. It is not production ready. It is part of a larger project called TrellisAI, under which we have LatticeUI, shadow, and haze.
-
-[shadow](https://github.com/trellisAI/shadow) is agent management tool, which is used to install, deploy, and manage the agents. its more like a pip/npm for agents.
-
 [haze](https://github.com/trellisAI/Haze) is a software for local homelab setup. it helps you to set up the homelab with both defined hardware and software.
 
 [LatticeUI](https://github.com/trellisAI/lattice-ui) is a UI interface for all the above applications. It is for end users with simple UI to manage agents, hardware,tools, and flows.
+
+**[Explore the Docs](https://trellisai.github.io/lattice-aif/docs.html)**
 
 ## 🤝 Contributing
 
@@ -62,3 +52,4 @@ Join our community to connect with other developers, get support, and contribute
 ## 📄 License
 
 Lattice-AIF(TrellisAI Product) is released under the [MIT License](LICENSE).
+

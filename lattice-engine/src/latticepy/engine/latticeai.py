@@ -17,6 +17,13 @@ class MinimalFormatter(logging.Formatter):
     def formatStack(self, stack_info):
         return ""
 
+class MinimalFormatter(logging.Formatter):
+    """A formatter that suppresses stack traces and stack info."""
+    def formatException(self, ei):
+        return ""
+    def formatStack(self, stack_info):
+        return ""
+
 
 from latticepy.engine.services.localdatabase import LocalDatabase, LocalDBModel
 
@@ -104,6 +111,14 @@ def main():
             print(f"Error creating directory '{lattice_path}': {e}")
             sys.exit(1)
 
+def main():
+    parser= argparse.ArgumentParser(description="LatticeAI Client")
+    parser.add_argument("run", type=str, help="mode to run the client", choices=["web", "daemon"], default='web')
+    parser.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
+    parser.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
+    parser.add_argument("--socket", action='store_true', help="to enable socket communication")
+    parser.add_argument("--config", type=str, help="Path to the configuration file", default=None)  
+    args= parser.parse_args()
     # Configure logging
     log_dir = os.path.join(home_dir, lattice_folder, 'engine', 'logs')
     os.makedirs(log_dir, exist_ok=True)
