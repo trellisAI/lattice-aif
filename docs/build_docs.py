@@ -173,10 +173,15 @@ html_template = f"""<!DOCTYPE html>
     <aside class="w-72 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 flex-shrink-0 flex flex-col h-full hidden md:flex z-10 transition-colors duration-300">
         <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center">
-                <svg class="w-6 h-6 mr-2 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path>
+                <svg width="150" height="80" viewBox="0 0 150 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="55" r="9" fill="#00203cff" stroke="#00203cff" stroke-width="2"/>
+                    <circle cx="40" cy="45" r="5" fill="#00203cff"/>
+                    <circle cx="35" cy="65" r="4" fill="#00203cff"/>
+                    <line x1="29" y1="55" x2="40" y2="45" stroke="#00203cff" stroke-width="2"/>
+                    <line x1="29" y1="55" x2="35" y2="65" stroke="#00203cff" stroke-width="2"/>
+                    <text x="50" y="48" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-size="32" fill="#222">Lattice</text>
+                    <text x="50" y="75" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-size="28" fill="#00203cff">AIF</text>
                 </svg>
-                Lattice AIF
             </h1>
             <!-- Dark Mode Toggle Desktop -->
             <button id="theme-toggle" class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
@@ -307,6 +312,10 @@ html_template = f"""<!DOCTYPE html>
                     token.href = token.href.replace('docs/', '');
                 }} else if (token.href === 'docs/latticeaif.drawio.svg') {{
                     token.href = 'latticeaif.drawio.svg';
+                }}
+            }} else if (token.type === 'html') {{
+                if (token.text.includes('src="docs/')) {{
+                    token.text = token.text.replace(/src="docs\//g, 'src="');
                 }}
             }} else if (token.type === 'link') {{
                 if (token.href.includes('lattice-engine/README.md')) token.href = '#lattice-engine';

@@ -1,6 +1,7 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="Lattice AI Logo" width="250"/>
+  <img src="docs/images/logo.png" alt="Lattice AIF Logo">
 </p>
+
 
 Welcome to Lattice AIF, an AI framework for building intelligent applications.
 
