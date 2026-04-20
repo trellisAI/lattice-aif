@@ -1,6 +1,7 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="Lattice AI Logo" width="250"/>
+  <img src="docs/images/logo.png" alt="Lattice AIF Logo">
 </p>
+
 
 Welcome to Lattice AIF, an AI framework for building intelligent applications.
 
@@ -19,7 +20,8 @@ In a world of fragmented AI capabilities, LatticeAI brings order and efficiency:
 * **Robust Tool-Calling:** Extend LLM capabilities beyond text generation. Connect your agents to any API, database, or internal system to perform real-world actions.
 * **Agent Orchestration:** Build complex, multi-step, multi-LLM agent workflows with ease, and manage their entire lifecycle.
 * **Lattice Engine:** Inspired by Docker Engine, the arch is designed to benefit from a continuously running, daemonized "Lattice Engine" that provides production-grade reliability, scalability, and resource management for your agents.
-* **Developer-Friendly:** Convert your existing Automation and Applications into AI tools without much workload along with MCP Integration.
+* **Developer-Friendly:** Easily convert your existing Automation and Applications into AI tools without much workload alongside MCP servers.
+* **User-Friendly:** Simple and intuitive CLI interface for easy interaction with the agents.
 * **Memory Management:** Have a inbuilt memory management layer for the Agents.
 * **logging & Token Management:** Have a inbuilt logging and token management layer for the Agents.
 
@@ -31,9 +33,9 @@ Lattice-AIF is organized into three core packages to ensure modularity and scala
 - [**lattice-client**](file:///home/pharsha/lattice-aif/lattice-client/README.md): The CLI layer for the user to interact with the engine. This package also includes a small streamlit UI application for demo. A standard UI web/desktop application is available as a seperate project([lattice-ui](https://github.com/trellisAI/lattice-ui)).
 - [**lattice-server**](file:///home/pharsha/lattice-aif/lattice-server/README.md): A lightweight utility for registering and exposing tools for agents. This provides a simple interface to expose tools to the engine using decorators to wrap existing python functions and classes. It provides alternative to MCP servers.
 
-## 📖 Documentation
+[haze](https://github.com/trellisAI/Haze) is a software for local homelab setup. it helps you to set up the homelab with both defined hardware and software.
 
-Our comprehensive documentation covers everything from installation and configuration to advanced agent development and deployment strategies.
+[LatticeUI](https://github.com/trellisAI/lattice-ui) is a UI interface for all the above applications. It is for end users with simple UI to manage agents, hardware,tools, and flows.
 
 **[Explore the Docs](https://trellisai.github.io/lattice-aif/docs.html)**
 

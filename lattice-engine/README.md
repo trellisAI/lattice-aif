@@ -2,8 +2,26 @@
 
 `lattice-engine` is the core orchestration layer of the Lattice AI framework. It manages the lifecycle of AI agents, coordinates tool execution, handles long-term memory via RAG, and provides a unified interface for multiple LLM providers.
 
-## Developer Architecture
+## User Architecture
 
+Note:- Before starting the engine, i suggest you to read about AI agents and how they work. This will help you to understand the engine better.
+
+As an end user, you can start the engine using the following command:
+
+```bash
+cd lattice-engine
+pip install -e .
+lattice-engine run http
+```
+
+Once the engine is started, it will create a local workspace at `~/.Lattice/server` and a local database at `~/.Lattice/server/localdb`. It will also create a local web server at `http://localhost:44444`. 
+
+
+If you want to use the engine with different configuration 
+
+
+
+## Developer Architecture
 From a developer's perspective, the engine is structured as a collection of modular services coordinated by a central bootstrap process.
 
 ### 1. Bootstrapping & Configuration (`latticeai.py`)
@@ -43,23 +61,6 @@ The engine uses the following directory structure for persistent data:
 - `~/.Lattice/server/localdb`: SQLite database file.
 - `~/.Lattice/engine/logs/`: Rotating log files for debugging and monitoring.
 
-## Installation for Development
-
-```bash
-# Clone the repository and install in editable mode
-pip install -e ./lattice-engine
-
-# The engine depends on several core AI libraries
-pip install -r ./lattice-engine/requirements.txt
-```
-
-## Running the Engine
-
-The engine can be started directly via the `lattice` CLI (from `lattice-client`) or as a standalone module:
-
-```bash
-python -m latticepy.engine.latticeai web --port 44444
-```
 
 ## License
 MIT

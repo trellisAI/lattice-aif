@@ -8,6 +8,14 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from pydantic import BaseModel, ValidationError
 from typing import Optional
+from pathlib import Path
+
+class MinimalFormatter(logging.Formatter):
+    """A formatter that suppresses stack traces and stack info."""
+    def formatException(self, ei):
+        return ""
+    def formatStack(self, stack_info):
+        return ""
 
 class MinimalFormatter(logging.Formatter):
     """A formatter that suppresses stack traces and stack info."""
@@ -20,24 +28,9 @@ class MinimalFormatter(logging.Formatter):
 from latticepy.engine.services.localdatabase import LocalDatabase, LocalDBModel
 
 
-if platform.system() == "Windows":
-    home_dir = os.path.join(os.environ["USERPROFILE"])
-elif platform.system() == "Linux" or platform.system() == "Darwin":
-    home_dir = os.path.expanduser("~")
-else:
-    print(f"Unsupported operating system: {platform.system()}")
-    sys.exit()
+home_dir = str(Path.home())
 lattice_folder = ".Lattice"
 lattice_path = os.path.join(home_dir, lattice_folder, 'server')
-
-if not os.path.exists(lattice_path):
-    try:
-        os.makedirs(lattice_path)
-        print("Lattice Folder created successfully.")
-    except OSError as e:
-        print(f"Error: '{lattice_path}': {e}")
-else:
-    print(f"{lattice_path} exists.")
 
 
 
@@ -73,6 +66,9 @@ class Config:
             return config
             
 class Client:
+    webprocess = None
+    config = None
+
     @classmethod
     def run(cls, config):
         cls.config = config
@@ -83,10 +79,37 @@ class Client:
         from latticepy.engine.services.webserver import startwebserver
         cls.webprocess = mp.Process(target=startwebserver, args=(cls.config.address, cls.config.port))
         cls.webprocess.start()
+        try:
+            cls.webprocess.join()
+        except KeyboardInterrupt:
+            cls.stop()
 
-    def stop(self):
-        pass
+    @classmethod
+    def stop(cls):
+        if cls.webprocess and cls.webprocess.is_alive():
+            logging.info("Shutting down the web server process gracefully...")
+            if cls.webprocess.is_alive():
+                cls.webprocess.terminate()
+                cls.webprocess.join()
 
+
+def main():
+    parser= argparse.ArgumentParser(description="LatticeAI Client")
+    subparsers = parser.add_subparsers(dest="command", required=True, help="mode to run the client")
+    run_parser = subparsers.add_parser("run", help="Run the client")
+    run_parser.add_argument("mode", type=str, nargs="?", help="mode to run the client", choices=["http", "daemon"], default='http')
+    run_parser.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
+    run_parser.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
+    run_parser.add_argument("--socket", action='store_true', help="to enable socket communication")
+    run_parser.add_argument("--config", type=str, help="Path to the configuration file", default=None)  
+    args= parser.parse_args()
+    
+    if not os.path.exists(lattice_path):
+        try:
+            os.makedirs(lattice_path)
+        except OSError as e:
+            print(f"Error creating directory '{lattice_path}': {e}")
+            sys.exit(1)
 
 def main():
     parser= argparse.ArgumentParser(description="LatticeAI Client")
@@ -122,18 +145,23 @@ def main():
 
     logger = logging.getLogger(__name__)
 
-    runtime_mode=args.run
+    runtime_mode=args.mode
     if args.config:
         if os.path.exists(args.config):
-            shutil.copy(args.config, os.path.join(lattice_path, "config.toml"))
+            config_path = args.config
         else:
             logger.error("Config file not found")
             sys.exit(1)
-    config_path = os.path.join(lattice_path, "config.toml")
+    else:
+        config_path = os.path.join(lattice_path, "config.toml")
+        
     conf=Config()
     dbdata=LocalDBModel(name='localdb', url_path=lattice_path, db='sqlite3', password=None)
     
     if not os.path.exists(config_path):
+        if args.config:
+            logger.error(f"Provided config file does not exist: {config_path}")
+            sys.exit(1)
         config=ConfigModel(mode=runtime_mode, address=args.address, port=args.port, config_path=config_path, DATABASE=dbdata)
         conf.update(config)
     config=conf.load(config_path)

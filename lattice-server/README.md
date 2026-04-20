@@ -1,6 +1,6 @@
 # Lattice Server
 
-`lattice-server` is a lightweight utility for registering Python functions as tools, typically for use with Large Language Models (LLMs). It provides a decorator-based registry and Pydantic-powered schema validation to make it easy to expose local functions via a web API.
+`lattice-server` is a lightweight utility for registering Python functions as tools, typically for use with Large Language Models (LLMs). This complements MCP servers. This can be used to expose local functions and existing applications as tools without MCP. It provides a decorator-based registry and Pydantic-powered schema validation to make it easy to expose local functions via a web API.
 
 ## Features
 
@@ -12,7 +12,8 @@
 ## Installation
 
 ```bash
-pip install lattice-server
+cd lattice-server
+pip install -e .
 ```
 
 *(Note: If installing from source within the LatticePy workspace, use `pip install -e ./lattice-server`)*
@@ -21,7 +22,7 @@ pip install lattice-server
 
 ### Registering a Tool
 
-Use the `LatticeTool.tool` decorator to register a function. You must provide a `description` and a `schema`.
+Use the `LatticeTool.tool` decorator to register a function. You must provide a `description` and a `schema`. This converts your python function into a tool that can be used by LLMs.
 
 ```python
 from latticepy.server import LatticeTool
@@ -53,10 +54,9 @@ print(tools["square"])
 ```
 
 
-
 ### Standardizing Responses
 
-Use `ToolResponse` to wrap your tool's execution results.
+Use `ToolResponse` to wrap your tool's execution results. This is important for the LLM to understand the response.
 
 ```python
 from latticepy.server import ToolResponse
@@ -72,13 +72,14 @@ print(response.model_dump())
 
 ## API Endpoints
 
-While `lattice-server` is framework-agnostic, it is designed to support the following standard endpoint patterns:
+While `lattice-server` is framework agnostic, it is designed to support the following standard endpoint patterns:
 
 ### `GET /api/get-tool-functions`
-Returns a dictionary of all registered tools and their metadata. This is used by LLMs or clients for tool discovery.
+Exposes a dictionary of all registered tools and their metadata. This is used by LLMs or clients for tool discovery.
 
 ### `POST /api/call-tool-function`
-Executes a registered tool. Expects a JSON body with the following structure:
+The LLM sends the function name and arguments to this endpoint. The server then executes the function and returns the result.
+
 ```json
 {
   "function": "tool_name",
@@ -127,7 +128,8 @@ def call_tool(request: dict):
     tools = LatticeTool.toollist()
     if func_name not in tools:
         return ToolResponse(success=False, error=f"Tool {func_name} not found").model_dump()
-        
+    else:
+        tool = tools[func_name](**args)       
     try:
         # Implementation of function lookup and execution
         # ...
