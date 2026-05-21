@@ -78,7 +78,7 @@ def get_timestamp():
 def create_completion_id():
     return f"cmpl-{str(uuid.uuid4())}"
 
-async def generate_ai_response(messages, model, tag):
+async def generate_ai_response(messages, model, agent=None):
     """
     Async function to generate AI response
     """
@@ -95,7 +95,7 @@ async def generate_ai_response(messages, model, tag):
         return f"Model {model} not found.", '', {}
     try:
         logger.info("calling chat interface")
-        reply = Chatinterface(last_message, model, tag)
+        reply = Chatinterface(last_message, model, agent)
         llmresponse, agent_response, agent_headers = reply.chat()
         return llmresponse, agent_response, agent_headers
     except Exception as e:
@@ -190,6 +190,7 @@ async def create_connection(request: ConnectionModel):
             raise HTTPException(status_code=400, detail="ID and URL are required")
         if request.id in CONNECTIONS:
             raise HTTPException(status_code=400, detail="Connection already exists")
+        print(request)
         LlmConnections.add(request.id, request)
         logger.info(f"Connection created: {request.id}")    
         return JSONResponse({
@@ -209,14 +210,13 @@ async def list_connections():
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 @app.get("/api/lattice/connections/{connection_id}")
 async def get_connection(connection_id: str):
     try:
         connection = LlmConnections.get(connection_id)
         if not connection:
             raise HTTPException(status_code=404, detail="Connection not found")
-        
         return JSONResponse({
             "connection": connection.model_dump()
         })
@@ -238,7 +238,7 @@ async def delete_connection(connection_id: str):
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 # -------  prompt API endpoints ------------
 @app.get("/api/lattice/prompts")
 async def list_prompts():
@@ -464,7 +464,6 @@ async def create_lattice_server(request: ToolServer):
         logger.error(f"Error adding tool server: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # -------  vector DB API endpoints ------------
 @app.get("/api/lattice/vectordbs")
 async def list_vectordbs():
@@ -478,8 +477,8 @@ async def list_workflows():
 
 def startwebserver(host, port):
     import uvicorn
-    uvicorn.run('latticepy.engine.services.webserver:app', host="0.0.0.0", port=port, workers=1, reload=True)
+    uvicorn.run('latticepy.engine.core.webserver:app', host="0.0.0.0", port=port, workers=1, reload=True)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run('latticepy.engine.services.webserver:app', host="0.0.0.0", port=3000, workers=1, reload=True)
+    uvicorn.run('latticepy.engine.core.webserver:app', host="0.0.0.0", port=3000, workers=1, reload=True)

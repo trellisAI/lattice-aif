@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import os
 import base64
 
@@ -54,7 +54,7 @@ def file_info(p: Path):
     },
     details={}
 )
-def ls(path: str = ".", show_hidden: bool = Query(False)):
+def ls(path: str = ".", show_hidden: bool = Query(False)) -> Tuple[ToolResponse, ToolResHeaders]:
     print(f"Listing path: {path} with show_hidden={show_hidden}")
     #p = (path).resolve()
     #ensure_within_base(p)

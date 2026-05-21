@@ -20,9 +20,9 @@ class Chatinterface:
         self.message = message
         self.agent=agent
         if self.modelinfo:
-            self.llm=llmClient(**(self.modelinfo.source).model_dump())
+            self.llm=llmClient.get_client(self.modelinfo.source)
         else:
-            return("unable to fetch the response")
+            raise ValueError("model information is unavailable")
         self.depth=3
 
     def chat(self):
@@ -37,7 +37,7 @@ class Chatinterface:
             #self.system_prompt = LatticeAgent.get(self.agent)['prompt']
             return self._tool_chat()
         else:
-            response =self.llm.chat(self.modelinfo.model, "", self.message)
+            response =self.llm.send_request(self.modelinfo.model, "", self.message)
             return response[0], "", {}
     
     def _tool_chat(self):
@@ -55,7 +55,7 @@ class Chatinterface:
         tools=json.loads(tools) if tools else None
         logger.debug(f"Using prompt: {prompt}")
         logger.debug(f"Using tools: {[tool['function']['name'] for tool in tools] if tools else 'No tools'}")
-        iresponse = self.llm.chat(self.modelinfo.model, prompt, self.message, tools=tools)
+        iresponse = self.llm.send_request(self.modelinfo.model, prompt, self.message, tools=tools)
         logger.debug(f"Response from LLM: {iresponse}")
         def final_response(toolresponse):
             #creating various interfaces for final response
@@ -69,14 +69,14 @@ class Chatinterface:
                 recall_opt=toolsob.getrecall(tool['function']['name'])
                 logger.debug(f"Recall option: {recall_opt}")
                 if recall_opt == 'flow':
-                    response=self.llm.chat(self.modelinfo.model, prompt, self.message, tools=tools)
+                    response=self.llm.send_request(self.modelinfo.model, prompt, self.message, tools=tools)
                     fresponse=final_response(toolresponse)
                     return fresponse, "", {}
                 if recall_opt == 'rephrase':
-                    response=self.llm.chat(self.modelinfo.model, prompt, f'use the data provided precisely answer {tres} in suitable format, data: {self.message}')
+                    response=self.llm.send_request(self.modelinfo.model, prompt, f'use the data provided precisely answer {tres} in suitable format, data: {self.message}')
                     return response[0], "", {}
                 if recall_opt == 'pass':
-                    response=self.llm.chat(self.modelinfo.model, prompt, f'Please find the data as requested {self.message} :{tres}')
+                    response=self.llm.send_request(self.modelinfo.model, prompt, f'Please find the data as requested {self.message} :{tres}')
                     return response[0], "", {}
                 if recall_opt == 'RAG':
                     pass

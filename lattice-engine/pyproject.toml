@@ -44,8 +44,8 @@ dev = [
 ]
 
 [project.scripts]
-lattice-engine = "latticepy.engine.latticeai:main"
-latticepy-engine = "latticepy.engine.latticeai:main"
+latticeaif-engine = "latticepy.engine.latticeai:main"
+laif-engine = "latticepy.engine.latticeai:main"
 
 [project.urls]
 Homepage = "https://github.com/yourusername/LatticePy"

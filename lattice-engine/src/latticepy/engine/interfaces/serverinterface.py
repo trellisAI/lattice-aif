@@ -7,39 +7,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from latticepy.engine.services.localdatabase import LocalDatabase
+from latticepy.engine.core.localdatabase import LocalDatabase
+from latticepy.engine.core.pydanticmodels import ToolDetails, ToolServer, ToolResHeaders, ToolResponse
 
+db = LocalDatabase() 
 
-LocalDatabase.create_tables(
-    'toolservers',
-    {
-        'id': 'TEXT PRIMARY KEY',
-        'url': 'TEXT',
-        'details': 'TEXT'
-    }   
-)
-
-class ToolDetails(BaseModel):
-    name: str
-    description: str
-    toolschema: Dict[str, Any]
-    details: Dict[str, Any]
-
-class ToolServer(BaseModel):
-    id: str
-    url: str
-    details: Optional[Dict[str, Any]] = None
-
-class ToolResHeaders(BaseModel):
-    content_type: str = Field('json', description="The content type of the response.")
-    content_file_name: Optional[str] = Field('None', description='if the content_type is a file, name of the file')
-    content_desciption: Optional[str]
-    
-class ToolResponse(BaseModel):
-    success: bool = Field(..., description="Indicates if the tool execution was successful.")
-    headers: Optional[ToolResHeaders] = Field(None, description="Headers providing metadata about the response.")
-    data: Any = Field(None, description="The data returned by the tool, if any.")
-    error: Optional[str] = Field(None, description="Error message if the tool execution failed.")
     
 def callserver(toolname, arguments):
     s=servertooldata()
@@ -62,7 +34,8 @@ def callserver(toolname, arguments):
 
 class servertooldata:
     def __init__(self ):
-        self.tooldata, self.server_tools =self.listdetails()
+        self.tooldata={}
+        self.server_tools ={}
 
     def _get_tools(self, url) -> List:
         # get the tools from each server
@@ -87,13 +60,12 @@ class servertooldata:
         # get the tools shared by the server
         # Create an interface to get the tool data
         try:
-            conn = LocalDatabase.connect()
-            conn.execute(
-                "INSERT INTO toolservers (id, url, details) VALUES (?, ?, ?)",
-                (serverdata.id, serverdata.url, json.dumps(serverdata.details))
-            )
-            conn.connection.commit()
-            conn.connection.commit()
+            with db.get_connection() as conn:
+                conn.execute(
+                    "INSERT INTO toolservers (id, url, details) VALUES (?, ?, ?)",
+                    (serverdata.id, serverdata.url, json.dumps(serverdata.details))
+                )
+                conn.commit()
         except Exception as e:
             logger.error(f"Error adding server: {e}")
             raise ValueError(f"Error adding server: {e}")
@@ -101,9 +73,9 @@ class servertooldata:
     def delete(self, server_id: str) -> bool:
         #delete the servers
         try:
-            conn = LocalDatabase.connect()
-            conn.execute("DELETE FROM toolservers WHERE id = ?", (server_id,))
-            conn.connection.commit()
+            with db.get_connection() as conn:
+                conn.execute("DELETE FROM toolservers WHERE id = ?", (server_id,))
+                conn.commit()
             logger.info(f"Model {server_id} deleted successfully.")
             return True
         except Exception as e:
@@ -111,19 +83,27 @@ class servertooldata:
             return False
         
     def list(self):
-        rows = LocalDatabase.connect().execute("SELECT * FROM toolservers").fetchall()
+        with db.get_connection() as conn:
+            rows = conn.execute("SELECT * FROM toolservers").fetchall()
+            print('rows:', rows)
         if rows:
             data={}
             for record in rows:
-                data[record["id"]]= {**record}
+                try:
+                    data[record["id"]]= {'status': 'online' if requests.get(f'{record["url"]}/get-tool-functions').status_code == 200 else 'offline'}
+                except Exception as e:
+                    print(f"Error fetching status for {record['id']}: {e}")
+                    data[record["id"]]= {'status': 'offline'}
+            print('data',data)
             return data
         else:
-            print("No servers available.")
+            logger.info("No servers available.")
             return {}
     
     def listdetails(self) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         #list the servers
-        rows = LocalDatabase.connect().execute("SELECT * FROM toolservers").fetchall()
+        with db.get_connection() as conn:
+            rows = conn.execute("SELECT * FROM toolservers").fetchall()
         #print(rows)
         if rows:
             data={}
@@ -134,7 +114,10 @@ class servertooldata:
                 logger.debug(f'fetched server tools: {server_tools}')
                 sdata.update({record["id"]:tooldata})
                 data.update({f'{record["id"]}.{tool.name}':{'url':record["url"], 'data' : tool.model_dump()} for tool in server_tools})
-            return data, sdata
+            self.tooldata=data
+            self.server_tools=sdata
+            logger.debug(f"Loaded server data: {self.tooldata}")
+            logger.debug(f"Loaded server tools: {self.server_tools}")
         else:
             logger.info("No servers available.")
-            return {}, {}
+        return self.tooldata, self.server_tools

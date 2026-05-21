@@ -1,65 +1,23 @@
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional, Literal
+import json
 
 
 from latticepy.engine.interfaces.llminterface import llmClient
-from latticepy.engine.services.localdatabase import LocalDatabase
+from latticepy.engine.core.localdatabase import LocalDatabase
+from latticepy.engine.core.pydanticmodels import PromptModel, VectorDB, ConnectionModel, Model
 
 import logging
 
 logger = logging.getLogger(__name__)
 
-# --- Initialize Local Database ---
-LocalDatabase.create_tables(
-    'connections',
-    {'id': 'TEXT PRIMARY KEY', 'source': 'TEXT', 'url': 'TEXT', 'api_key': 'TEXT'}
-)
-LocalDatabase.create_tables(
-    'prompts',
-    {'id': 'TEXT PRIMARY KEY', 'prompt': 'TEXT'}
-)
-LocalDatabase.create_tables(
-    'vectordb',
-    {'id': 'TEXT PRIMARY KEY', 'db': 'TEXT', 'url': 'TEXT', 'password': 'TEXT', 'tablename': 'TEXT'}   # renamed column
-)
+db = LocalDatabase()
 
-
-# --- Data Models ---
-
-class PromptModel(BaseModel):
-    id: str
-    prompt: str
-
-class VectorDB(BaseModel):
-    id: str
-    db: str = Field(default='postgres')  # default value for db
-    url: str
-    password: str
-    tablename: str   # renamed from 'table'
-
-llmSevers=Literal[
-    'ollama',
-    'google',
-    'openai',
-    'claude'
-]
-
-class ConnectionModel(BaseModel):
-    id: str
-    source: llmSevers
-    url: str
-    api_key: Optional[str]
-
-class Model(BaseModel):
-    name: str
-    model: str
-    source: ConnectionModel
-    details: Optional[Dict[str, Any]] = None
 
 # --- Data Management Classes ---
 
 class Data:
-    data = {}  # mapping id -> object
+    data = {} 
 
     @classmethod
     def _get_tablename(cls):
@@ -114,15 +72,17 @@ class Data:
             logger.warning(f"Data {key} already exists.")
             raise ValueError(f"Data {key} already exists.")
         try:
-            conn = LocalDatabase.connect()
-            table = cls._get_tablename()
-            # Assume the model can be converted to dict
-            data_dict = value.dict()
-            columns = ", ".join(data_dict.keys())
-            placeholders = ", ".join(["?"] * len(data_dict))
-            sql = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
-            conn.execute(sql, tuple(data_dict.values()))
-            conn.connection.commit()
+            with LocalDatabase().get_connection() as conn:
+                table = cls._get_tablename()
+                data_dict = value.dict()
+                for key, value in data_dict.items():
+                    if isinstance(value, dict):
+                        data_dict[key] = json.dumps(value)
+                columns = ", ".join(data_dict.keys())
+                placeholders = ", ".join(["?"] * len(data_dict))
+                sql = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+                conn.execute(sql, tuple(data_dict.values()))
+                conn.commit()
         except Exception as e:
             logger.error(f"Error adding data to database: {e}")
             raise  ValueError(f"Error adding data to database: {e}")
@@ -133,12 +93,12 @@ class Data:
     def delete(cls, key):
         logger.info(f"Deleting data with key: {key}")
         try:
-            conn = LocalDatabase.connect()
-            table = cls._get_tablename()
-            sql = f"DELETE FROM {table} WHERE id = ?"
-            logger.debug(sql)
-            conn.execute(sql, (key,))
-            conn.connection.commit()
+            with LocalDatabase().get_connection() as conn:
+                table = cls._get_tablename()
+                sql = f"DELETE FROM {table} WHERE id = ?"
+                logger.debug(sql)
+                conn.execute(sql, (key,))
+                conn.commit()
         except Exception as e:
             logger.error(f"Error deleting data from database: {e}")
             return
@@ -148,11 +108,11 @@ class Data:
     @classmethod
     def clear(cls):
         try:
-            conn = LocalDatabase.connect()
-            table = cls._get_tablename()
-            sql = f"DELETE FROM {table}"
-            conn.execute(sql)
-            conn.connection.commit()
+            with LocalDatabase().get_connection() as conn:
+                table = cls._get_tablename()
+                sql = f"DELETE FROM {table}"
+                conn.execute(sql)
+                conn.commit()
         except Exception as e:
             logger.error(f"Error clearing data from database: {e}")
             return
@@ -165,20 +125,23 @@ class Data:
 class LlmConnections(Data):
     @classmethod
     def refresh(cls):
-        rows = LocalDatabase.connect().execute("SELECT * FROM connections").fetchall()
+        with LocalDatabase().get_connection() as conn:
+            rows = conn.execute("SELECT * FROM connections").fetchall()
         dict_rows = [dict(row) for row in rows]
         cls.data = {record["id"]: ConnectionModel(**record) for record in dict_rows}
 
 class Promptlist(Data):
     @classmethod
     def refresh(cls):
-        rows = LocalDatabase.connect().execute("SELECT * FROM prompts").fetchall()
+        with LocalDatabase().get_connection() as conn:
+            rows = conn.execute("SELECT * FROM prompts").fetchall()
         cls.data = {record["id"]: PromptModel(**record) for record in rows}
 
 class VectorDBlist(Data):
     @classmethod
     def refresh(cls):
-        rows = LocalDatabase.connect().execute("SELECT * FROM vectordb").fetchall()
+        with LocalDatabase().get_connection() as conn:
+            rows = conn.execute("SELECT * FROM vectordb").fetchall()
         cls.data = {record["id"]: VectorDB(**record) for record in rows}
 
 class LLMmodels():
@@ -193,10 +156,11 @@ class LLMmodels():
             if not connec:
                 logger.warning(f"Connection {connection} not found.")
                 continue
-            Client=llmClient(**connec.model_dump(exclude_unset=True))
+            Client=llmClient.get_client(connec)
             models = Client.models()
             if models:
                 for model in models:
+                    print(model)
                     self.MODELS.update({model.get('name'):Model(**model)})
 
 

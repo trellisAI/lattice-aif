@@ -1,0 +1,118 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Shadow Agent Manifest Schema",
+    "description": "Schema for validating Lattice-AIF Shadow Agent packages",
+    "type": "object",
+    "required": [
+        "agent_id",
+        "name",
+        "version",
+        "entry_point",
+        "runtime",
+        "lattice_config"
+    ],
+    "properties": {
+        "agent_id": {
+            "type": "string",
+            "description": "A unique identifier for the agent (e.g., researcher-pro-v1).",
+            "pattern": "^[a-z0-9-]+$"
+        },
+        "name": {
+            "type": "string",
+            "description": "Display name of the agent."
+        },
+        "version": {
+            "type": "string",
+            "description": "Semantic versioning (e.g., 1.0.2).",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "description": {
+            "type": "string",
+            "description": "A brief explanation of what the agent does."
+        },
+        "author": {
+            "type": "string",
+            "description": "The developer or organization that created the agent."
+        },
+        "entry_point": {
+            "type": "string",
+            "description": "The main Python file to execute (usually server.py)."
+        },
+        "requirements": {
+            "oneOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "An inline list of packages required by the agent."
+                },
+                {
+                    "type": "string",
+                    "description": "A path to a requirements file (e.g., 'requirements.txt' or 'package.json')."
+                }
+            ],
+            "description": "Dependencies required to run the tool server."
+        },
+        "runtime": {
+            "type": "object",
+            "required": [
+                "type",
+                "min_version"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "python",
+                        "node",
+                        "docker"
+                    ],
+                    "default": "python"
+                },
+                "min_version": {
+                    "type": "string",
+                    "description": "Minimum language runtime version (e.g., 3.10)."
+                },
+                "port_preference": {
+                    "type": "integer",
+                    "minimum": 1024,
+                    "maximum": 65535,
+                    "description": "Preferred port for the lattice-server to listen on."
+                }
+            }
+        },
+        "toolserver": {
+            "type": "object",
+            "required": [
+                "system_prompt",
+                "tools_definition_path"
+            ],
+            "properties": {
+                "system_prompt": {
+                    "type": "string",
+                    "description": "The core identity and instructions for the LLM."
+                },
+                "capabilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "list of capabilities/functions that are exposed to the agent"
+                },
+                "security": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "High-level permission scopes required by the agent."
+                }
+            }
+        },
+        "icon_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL or local path to the agent's avatar."
+        }
+    }
+}

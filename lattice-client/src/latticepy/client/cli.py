@@ -459,6 +459,10 @@ class CliOptions:
 
     def delete(self, args=None) -> None:
         try:
+            id = args.id if args else ''
+            if not id:
+                id = input("provide the id to delete: ")
+            self.endpoint = f"{self.endpoint}/{id}"
             response = self.session.delete(self.endpoint, timeout=self.session.request_timeout)
             response.raise_for_status()
             console.print_json(data=response.json())
@@ -473,6 +477,18 @@ class CliOptions:
             console.print_json(data=response.json())
         except Exception as e:
             logger.exception("Error clearing resource: %s", e)
+
+    def get(self, args=None) -> None:
+        id=args.id if args else ''
+        if not id:
+            id = input("provide the id to fetch the details: ")
+        self.endpoint = f"{self.endpoint}/{id}"
+        try:
+            response = self.session.get(self.endpoint, timeout=self.session.request_timeout)
+            response.raise_for_status()
+            console.print_json(data=response.json())
+        except Exception as e:
+            logger.exception("Error getting connection: %s", e)
 
 class LatticeAgent(BaseModel):
     id: str
@@ -585,9 +601,49 @@ class AgentsCliOptions(CliOptions):
         except Exception as e:
             logger.exception("Error updating agent: %s", e)
 
+class ConnectionModel(BaseModel):
+    id: str
+    source: llmSevers
+    url: str
+    api_key: Optional[str]
+    model: Optional[str]
+    details: Optional[Dict[str, Any]]
+
 class ConnCliOptions(CliOptions):
     def __init__(self):
         super().__init__("/api/lattice/connections")
+    def add(self):
+        name = safe_input("Enter Connection ID: ", default=None)
+        if not name:
+            logger.error("Connection ID is required.")
+            return
+        source = safe_input("Enter Connection Source: ", default=None)
+        if not source:
+            logger.error("Connection Source is required.")
+            return
+        url = safe_input("Enter Connection URL: ", default=None)
+        if not url:
+            logger.error("Connection URL is required.")
+            return
+        api_key = safe_input("Enter API Key: ", default=None)
+        model = safe_input("Enter Model: ", default=None)
+        details={}
+        while True:
+            detailkey = safe_input("Enter Additional Detail Key (leave blank to finish): ", default=None)
+            if not detailkey:
+                break
+            detailvalue = safe_input(f"Enter Additional Detail Value for {detailkey}: ", default=None)
+            if detailvalue:
+                details[detailkey] = detailvalue
+        details=json.dumps(details) if details else None
+        payload = {"id": name, "source": source, "url": url, "api_key": api_key, "model": model, "details": details}
+        print(payload)
+        try:
+            response = self.session.post(self.endpoint, json=payload, timeout=self.session.request_timeout)
+            response.raise_for_status()
+            console.print_json(data=response.json())
+        except Exception as e:
+            logger.exception("Error adding connection: %s", e)
 
 class PromptsCliOptions(CliOptions):
     def __init__(self):
@@ -910,11 +966,21 @@ def bind_standard_commands(tgt_app: typer.Typer, cls) -> None:
     def add_cmd():
         cls().add()
     @tgt_app.command("delete")
-    def delete_cmd():
-        cls().delete()
+    def delete_cmd(id: str = typer.Argument(..., help="ID of the resource to delete")):
+        class Args: pass
+        args = Args()
+        args.id = id
+        cls().delete(args)
     @tgt_app.command("clear")
     def clear_cmd():
-        cls().clear()
+        cls().clear()   
+    @tgt_app.command("get")
+    def get_cmd(id: str = typer.Argument(..., help="ID of the resource to get")):
+        class Args: pass
+        args = Args()
+        args.id = id
+        cls().get(args)
+
 
 bind_standard_commands(connections_app, ConnCliOptions)
 bind_standard_commands(prompts_app, PromptsCliOptions)

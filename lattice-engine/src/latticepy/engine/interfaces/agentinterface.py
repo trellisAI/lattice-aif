@@ -2,23 +2,14 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import json
 
-from latticepy.engine.services.localdatabase import LocalDatabase
+from latticepy.engine.core.localdatabase import LocalDatabase
 from latticepy.engine.interfaces.clientinterface import Promptlist
 import logging
 
 logger = logging.getLogger(__name__)
-#from latticepy.engine.services.toolengine import ToolData
 
-LocalDatabase.create_tables(
-    'latticeagents',
-    {
-        'id': 'TEXT PRIMARY KEY',
-        'prompt': 'TEXT',
-        'tools': 'TEXT',
-        'details': 'TEXT'
+db = LocalDatabase()
 
-    }
-)
 
 #should we add memory field also to the agent?
 
@@ -45,12 +36,12 @@ class LatticeAgent(BaseModel):
                 tool.pop('details', None)
             tool_text=json.dumps(self.tools)
             tooldetails=json.dumps(tooldetails)
-            conn = LocalDatabase.connect()
-            conn.execute(
-                "INSERT INTO latticeagents (id, prompt, tools, details) VALUES (?, ?, ?, ?)",
-                (name, prompt_text, tool_text, tooldetails)
-            )
-            conn.connection.commit()
+            with LocalDatabase().get_connection() as conn:
+                conn.execute(
+                    "INSERT INTO latticeagents (id, prompt, tools, details) VALUES (?, ?, ?, ?)",
+                    (name, prompt_text, tool_text, tooldetails)
+                )
+                conn.commit()
         except Exception as e:
             logger.error(f"Error creating model: {e}")
             raise ValueError("Error creating model: {e}")
@@ -60,7 +51,8 @@ class LatticeAgent(BaseModel):
         """
         List all custom models.
         """
-        rows = LocalDatabase.connect().execute("SELECT * FROM latticeagents").fetchall()
+        with LocalDatabase().get_connection() as conn:
+            rows = conn.execute("SELECT * FROM latticeagents").fetchall()
         logger.debug(rows)
         if rows:
             return {record["id"]: {**record} for record in rows}
@@ -73,7 +65,8 @@ class LatticeAgent(BaseModel):
         """
         List all custom models.
         """
-        rows = LocalDatabase.connect().execute("SELECT * FROM latticeagents").fetchall()
+        with LocalDatabase().get_connection() as conn:
+            rows = conn.execute("SELECT * FROM latticeagents").fetchall()
         logger.debug(rows)
         if rows:
             return [record["id"] for record in rows]
@@ -86,7 +79,8 @@ class LatticeAgent(BaseModel):
         """
         Get a specific custom model by ID.
         """
-        row = LocalDatabase.connect().execute("SELECT * FROM latticeagents WHERE id = ?", (model_id,)).fetchone()
+        with LocalDatabase().get_connection() as conn:
+            row = conn.execute("SELECT * FROM latticeagents WHERE id = ?", (model_id,)).fetchone()
         if row:
             return {**row}
         else:
@@ -99,9 +93,9 @@ class LatticeAgent(BaseModel):
         Delete a custom model by ID.
         """
         try:
-            conn = LocalDatabase.connect()
-            conn.execute("DELETE FROM latticeagents WHERE id = ?", (model_id,))
-            conn.connection.commit()
+            with LocalDatabase().get_connection() as conn:
+                conn.execute("DELETE FROM latticeagents WHERE id = ?", (model_id,))
+                conn.commit()
             logger.info(f"Model {model_id} deleted successfully.")
             return True
         except Exception as e:
@@ -114,10 +108,9 @@ class LatticeAgent(BaseModel):
         Clear all custom agents.
         """
         try:
-            conn = LocalDatabase.connect()
-            conn.execute("DELETE FROM latticeagents")
-            conn.connection.commit()
-            conn.connection.commit()
+            with LocalDatabase().get_connection() as conn:
+                conn.execute("DELETE FROM latticeagents")
+                conn.commit()
             logger.info("All custom models cleared successfully.")
             return True
         except Exception as e:
@@ -128,19 +121,19 @@ class LatticeAgent(BaseModel):
     def update(agent_id: str, data) -> None:
         "update the tool or prompt data of existing agent"
         try:
-            conn = LocalDatabase.connect()
-            if data['prompt'] is not None:
-                conn.execute(
-                    "UPDATE latticeagents SET prompt = ? WHERE id = ?",
-                    (data['prompt'], agent_id)
-                )
-            if data['tools'] is not None:
-                tool_text=json.dumps(data['tools'])
-                conn.execute(
-                    "UPDATE latticeagents SET tools = ? WHERE id = ?",
-                    (tool_text, agent_id)
-                )
-            conn.connection.commit()
+            with LocalDatabase().get_connection() as conn:
+                if data['prompt'] is not None:
+                    conn.execute(
+                        "UPDATE latticeagents SET prompt = ? WHERE id = ?",
+                        (data['prompt'], agent_id)
+                    )
+                if data['tools'] is not None:
+                    tool_text=json.dumps(data['tools'])
+                    conn.execute(
+                        "UPDATE latticeagents SET tools = ? WHERE id = ?",
+                        (tool_text, agent_id)
+                    )
+                conn.commit()
             logger.info(f"Agent {agent_id} updated successfully.")
         except Exception as e:
             logger.error(f"Error updating agent {agent_id}: {e}")

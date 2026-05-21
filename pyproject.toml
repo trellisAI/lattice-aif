@@ -23,15 +23,14 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
     "lattice-client==0.1.0",
-    "lattice-server==0.1.0",
+    "lattice-engine==0.1.0",
+    "lattice-server==0.1.0"
 ]
 
 [project.optional-dependencies]
 dev = [
     "lattice-client[dev]==0.1.0",
-    "lattice-server[dev]==0.1.0",
-    "mkdocs>=1.5.0",
-    "mkdocs-material>=9.5.0",
+    "lattice-engine[dev]==0.1.0"
 ]
 
 [project.urls]

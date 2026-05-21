@@ -9,6 +9,9 @@ from logging.handlers import TimedRotatingFileHandler
 from pydantic import BaseModel, ValidationError
 from typing import Optional
 from pathlib import Path
+import multiprocessing as mp
+
+from latticepy.engine.core.pydanticmodels import ConfigModel, LocalDBModel
 
 class MinimalFormatter(logging.Formatter):
     """A formatter that suppresses stack traces and stack info."""
@@ -23,26 +26,12 @@ class MinimalFormatter(logging.Formatter):
         return ""
     def formatStack(self, stack_info):
         return ""
-
-
-from latticepy.engine.services.localdatabase import LocalDatabase, LocalDBModel
 
 
 home_dir = str(Path.home())
 lattice_folder = ".Lattice"
 lattice_path = os.path.join(home_dir, lattice_folder, 'server')
-
-
-
-class ConfigModel(BaseModel):
-    mode: str
-    address: str
-    port: int
-    config_path: Optional[str] = f'{lattice_path}/config.toml'
-    SOCKET: Optional[bool] = False
-    DATABASE: LocalDBModel
-    TOOL_SERVER: Optional[str] = None
-
+os.makedirs(lattice_path, exist_ok=True)
 
 class Config:
 
@@ -72,11 +61,12 @@ class Client:
     @classmethod
     def run(cls, config):
         cls.config = config
-        LocalDatabase(cls.config.DATABASE)
-        os.environ["LATTICE_DB_PATH"] = os.path.join(cls.config.DATABASE.url_path, cls.config.DATABASE.name)
+        from latticepy.engine.core.localdatabase import LocalDatabase, initiaize_db
+        lb=LocalDatabase()
+        lb.initialize(cls.config.DATABASE)
+        initiaize_db(lb)
+        from latticepy.engine.core.webserver import startwebserver
         #LocalDatabase.drop(table_name='latticeagents')
-        import multiprocessing as mp
-        from latticepy.engine.services.webserver import startwebserver
         cls.webprocess = mp.Process(target=startwebserver, args=(cls.config.address, cls.config.port))
         cls.webprocess.start()
         try:
@@ -92,7 +82,6 @@ class Client:
                 cls.webprocess.terminate()
                 cls.webprocess.join()
 
-
 def main():
     parser= argparse.ArgumentParser(description="LatticeAI Client")
     subparsers = parser.add_subparsers(dest="command", required=True, help="mode to run the client")
@@ -100,26 +89,12 @@ def main():
     run_parser.add_argument("mode", type=str, nargs="?", help="mode to run the client", choices=["http", "daemon"], default='http')
     run_parser.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
     run_parser.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
-    run_parser.add_argument("--socket", action='store_true', help="to enable socket communication")
-    run_parser.add_argument("--config", type=str, help="Path to the configuration file", default=None)  
+    run_parser.add_argument("--config", type=str, nargs="?", help="Path to the configuration file", default=None)
+    #run_parser.add_argument("--socket", action='store_true', help="to enable socket communication")
+    db_parser = subparsers.add_parser("db", help="Run the client")
+    db_parser.add_argument("--droptable", type=str, nargs="?", help="table name to drop", default=None)
     args= parser.parse_args()
-    
-    if not os.path.exists(lattice_path):
-        try:
-            os.makedirs(lattice_path)
-        except OSError as e:
-            print(f"Error creating directory '{lattice_path}': {e}")
-            sys.exit(1)
 
-def main():
-    parser= argparse.ArgumentParser(description="LatticeAI Client")
-    parser.add_argument("run", type=str, help="mode to run the client", choices=["web", "daemon"], default='web')
-    parser.add_argument("--port", type=int, help="Port number to run the client on", default=44444)
-    parser.add_argument("--address", type=str, help="Address to run the client on", default="localhost")
-    parser.add_argument("--socket", action='store_true', help="to enable socket communication")
-    parser.add_argument("--config", type=str, help="Path to the configuration file", default=None)  
-    args= parser.parse_args()
-    # Configure logging
     log_dir = os.path.join(home_dir, lattice_folder, 'engine', 'logs')
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, 'lattice.log')
@@ -145,28 +120,35 @@ def main():
 
     logger = logging.getLogger(__name__)
 
-    runtime_mode=args.mode
-    if args.config:
-        if os.path.exists(args.config):
-            config_path = args.config
-        else:
-            logger.error("Config file not found")
-            sys.exit(1)
-    else:
-        config_path = os.path.join(lattice_path, "config.toml")
-        
-    conf=Config()
+    # example lattice-engine run http --port 44444 --address localhost
+    
+    
+    
     dbdata=LocalDBModel(name='localdb', url_path=lattice_path, db='sqlite3', password=None)
     
+    if args.command == "db":
+        from latticepy.engine.core.localdatabase import LocalDatabase, initiaize_db
+        lb=LocalDatabase()
+        lb.initialize(dbdata)
+        initiaize_db(lb)
+        lb.drop(args.droptable)
+        sys.exit(0)
+
+    runtime_mode=args.mode
+    if args.config:
+        config_path = args.config
+    else:
+        config_path = os.path.join(lattice_path, "config.toml")
     if not os.path.exists(config_path):
-        if args.config:
-            logger.error(f"Provided config file does not exist: {config_path}")
-            sys.exit(1)
-        config=ConfigModel(mode=runtime_mode, address=args.address, port=args.port, config_path=config_path, DATABASE=dbdata)
-        conf.update(config)
-    config=conf.load(config_path)
-    logger.info(f"Starting Lattice Client in {runtime_mode} mode")
+        logger.error(f"Provided config file does not exist: {config_path}")
+        sys.exit(1)
+    config=ConfigModel(mode=runtime_mode, address=args.address, port=args.port, config_path=config_path, DATABASE=dbdata)
+    conf=Config()
+    conf.update(config)
+    conf.load(config_path)
+    logger.info(f"Starting Lattice Client in {args.mode} mode")
     Client.run(config)
+    
 
 if __name__ == "__main__":
     main()
